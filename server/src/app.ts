@@ -84,18 +84,26 @@ app.use('/api/analytics', analyticsRoutes);
 // Serve static files from React app in production (optional - if deploying as single service)
 if (process.env.NODE_ENV === 'production' && process.env.SERVE_STATIC === 'true') {
   const clientBuildPath = path.join(__dirname, '../../client/dist');
+  const fs = require('fs');
   
-  // Serve static files (CSS, JS, images, etc.)
-  app.use(express.static(clientBuildPath));
-  
-  // Handle React routing - return all non-API requests to React app
-  app.get('*', (req, res, next) => {
-    // Skip API routes and health check
-    if (req.path.startsWith('/api') || req.path === '/health') {
-      return next();
-    }
-    res.sendFile(path.join(clientBuildPath, 'index.html'));
-  });
+  // Check if build directory exists
+  if (fs.existsSync(clientBuildPath)) {
+    logger.info('Serving static files from', { path: clientBuildPath });
+    
+    // Serve static files (CSS, JS, images, etc.)
+    app.use(express.static(clientBuildPath));
+    
+    // Handle React routing - return all non-API requests to React app
+    app.get('*', (req, res, next) => {
+      // Skip API routes and health check
+      if (req.path.startsWith('/api') || req.path === '/health') {
+        return next();
+      }
+      res.sendFile(path.join(clientBuildPath, 'index.html'));
+    });
+  } else {
+    logger.warn('Static files directory not found', { path: clientBuildPath, cwd: process.cwd(), __dirname });
+  }
 }
 
 // 404 handler (must be after all routes)
