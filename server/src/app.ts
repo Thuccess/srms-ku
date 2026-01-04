@@ -84,13 +84,17 @@ app.use('/api/analytics', analyticsRoutes);
 // Serve static files from React app in production (optional - if deploying as single service)
 if (process.env.NODE_ENV === 'production' && process.env.SERVE_STATIC === 'true') {
   const clientBuildPath = path.join(__dirname, '../../client/dist');
+  
+  // Serve static files (CSS, JS, images, etc.)
   app.use(express.static(clientBuildPath));
   
-  // Handle React routing - return all requests to React app
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(path.join(clientBuildPath, 'index.html'));
+  // Handle React routing - return all non-API requests to React app
+  app.get('*', (req, res, next) => {
+    // Skip API routes and health check
+    if (req.path.startsWith('/api') || req.path === '/health') {
+      return next();
     }
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
   });
 }
 

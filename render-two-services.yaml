@@ -1,18 +1,16 @@
 services:
-  # Full-stack Service (Backend API + Frontend)
+  # Backend API Service
   - type: web
-    name: student-risk-system
+    name: student-risk-api
     env: node
     plan: starter
     region: oregon
-    buildCommand: cd client && npm install && npm run build && cd ../server && npm install && npm run build
+    buildCommand: cd server && npm install && npm run build
     startCommand: cd server && npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: SERVE_STATIC
-        value: "true"
       - key: MONGO_URI
         sync: false
       - key: JWT_SECRET
@@ -27,4 +25,16 @@ services:
         optional: true
       - key: LOG_LEVEL
         value: info
+
+  # Frontend Service (served as web service with static files)
+  - type: web
+    name: student-risk-frontend
+    env: node
+    plan: starter
+    region: oregon
+    buildCommand: cd client && npm install && npm run build
+    startCommand: npx serve -s client/dist -l 10000
+    envVars:
+      - key: VITE_API_URL
+        sync: false
 
