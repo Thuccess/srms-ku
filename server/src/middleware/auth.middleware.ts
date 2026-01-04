@@ -106,11 +106,12 @@ export const authenticate = async (
  * @returns JWT token string
  */
 export const generateToken = (userId: string): string => {
-  const expiresIn = (process.env.JWT_EXPIRES_IN || '7d') as string;
+  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+  // Type assertion needed due to strict TypeScript types in jsonwebtoken
   return jwt.sign(
     { userId },
     getJwtSecret(),
-    { expiresIn }
+    { expiresIn } as jwt.SignOptions
   );
 };
 
