@@ -1,0 +1,40 @@
+services:
+  # Backend API Service
+  - type: web
+    name: student-risk-api
+    env: node
+    plan: starter
+    region: oregon
+    buildCommand: cd server && npm install && npm run build
+    startCommand: cd server && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+        optional: true
+      - key: SENTRY_DSN
+        sync: false
+        optional: true
+      - key: LOG_LEVEL
+        value: info
+
+  # Frontend Service (Static Site)
+  - type: static
+    name: student-risk-frontend
+    plan: starter
+    region: oregon
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+

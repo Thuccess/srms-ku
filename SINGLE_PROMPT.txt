@@ -1,0 +1,107 @@
+You are implementing all production readiness improvements for a Student Risk Prediction System (MERN stack with TypeScript). The system has core functionality but needs security hardening, complete data models, testing, logging, and deployment configuration.
+
+SYSTEM CONTEXT:
+- Backend: Node.js + Express + TypeScript + MongoDB (Mongoose) at server/
+- Frontend: React + TypeScript + Vite + TailwindCSS at client/
+- Authentication: JWT-based with RBAC (8 roles: VC, DVC_ACADEMIC, DEAN, HOD, ADVISOR, LECTURER, REGISTRY, IT_ADMIN)
+- Current location: C:\Users\success\Desktop\student-risk-system\
+
+IMPLEMENT ALL OF THE FOLLOWING IN ORDER:
+
+=== PHASE 1: CRITICAL SECURITY ===
+1. Fix JWT_SECRET: Remove hardcoded default in server/src/middleware/auth.middleware.ts, make it required, add validation on startup
+2. Add security middleware: Install helmet, express-rate-limit, express-validator. Add to server/src/app.ts:
+   - Helmet.js with security headers
+   - Rate limiting: login (5/15min), API (100/15min), risk prediction (20/min)
+   - Request size limits (10MB)
+   - Input sanitization
+3. Password policy: Update User model and auth controller to require: min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+4. Password reset: Add resetToken/resetTokenExpiry to User model, create forgotPassword and resetPassword endpoints, create frontend components (ForgotPassword.tsx, PasswordReset.tsx)
+5. CSRF protection: Install csurf, add CSRF middleware, create token endpoint
+
+=== PHASE 2: COMPLETE DATA MODELS ===
+1. Create Faculty model (server/src/models/Faculty.ts): code, name, description, deanId, isActive
+2. Create Department model (server/src/models/Department.ts): code, name, facultyId, description, hodId, isActive
+3. Create Course model (server/src/models/Course.ts): code, name, departmentId, credits, description, isActive
+4. Create CourseEnrollment model (server/src/models/CourseEnrollment.ts): studentId, courseId, semester, academicYear, grade, attendance, status
+5. Update Student model: Add facultyId, departmentId, enrolledCourses fields. Rename 'course' to 'program' for clarity
+6. Update mappingService.ts: Replace placeholder functions with actual database queries using new models
+7. Create seed scripts: seedFaculties.ts, seedDepartments.ts, seedCourses.ts with realistic Kampala University data
+
+=== PHASE 3: ERROR HANDLING & LOGGING ===
+1. Structured logging: Install winston, winston-daily-rotate-file. Create server/src/utils/logger.ts with console/file transports, replace all console.log/error with logger
+2. Error tracking: Install @sentry/node, create errorTracker.ts, add middleware
+3. Error handler: Create server/src/middleware/errorHandler.middleware.ts - hide stack traces in production, user-friendly messages
+4. Request logging: Create server/src/middleware/requestLogger.middleware.ts - log requests/responses with timing
+
+=== PHASE 4: TESTING SUITE ===
+1. Setup: Install jest, @types/jest, ts-jest, supertest. Create jest.config.js, test directory structure
+2. Unit tests: Test riskScoring.service.ts and mappingService.ts with edge cases (80%+ coverage)
+3. Integration tests: Test auth.routes, student.routes, risk.routes with different roles
+4. RBAC tests: Test rbac.middleware.ts - verify each role's access, scope filtering, unauthorized attempts
+5. Frontend tests: Setup vitest, @testing-library/react, create example component test
+
+=== PHASE 5: USER MANAGEMENT ADMIN PANEL ===
+1. API: Create server/src/controllers/user.controller.ts and routes/user.routes.ts with:
+   - GET /api/users (list with pagination)
+   - GET /api/users/:id
+   - POST /api/users (create)
+   - PUT /api/users/:id (update)
+   - DELETE /api/users/:id (soft delete)
+   - POST /api/users/bulk-import (CSV)
+2. UI: Create client/components/UserManagement.tsx, UserForm.tsx, UserList.tsx with search, filter, pagination, role assignment
+
+=== PHASE 6: DOCUMENTATION ===
+1. API docs: Install swagger-jsdoc, swagger-ui-express. Create swagger.ts, document all endpoints, add /api-docs route
+2. Deployment guide: Create DEPLOYMENT_GUIDE.md with step-by-step production setup, MongoDB Atlas, Docker, Nginx, SSL
+3. User guides: Create docs/USER_GUIDE_*.md for each role (VC, DEAN, LECTURER, REGISTRY) with screenshots
+4. Architecture: Create docs/ARCHITECTURE.md with system overview, data flow, RBAC, database schema
+
+=== PHASE 7: PERFORMANCE ===
+1. Caching: Install node-cache, create cache.middleware.ts for analytics (5min), settings (10min), student list (1min)
+2. Pagination: Ensure all list endpoints have pagination with metadata (total, page, pageSize, totalPages)
+3. Frontend: Implement React.lazy code splitting, optimize bundle, add error boundaries, virtual scrolling
+
+=== PHASE 8: MONITORING ===
+1. Health check: Create server/src/routes/health.routes.ts with /api/health endpoint checking DB, uptime, memory
+2. Monitoring docs: Create docs/MONITORING.md with setup instructions for uptime monitoring, application monitoring
+
+=== PHASE 9: DEPLOYMENT ===
+1. Docker: Create Dockerfile, Dockerfile.client, docker-compose.yml, .dockerignore
+2. Production build: Optimize builds, add environment-specific scripts
+3. CI/CD: Create .github/workflows/ci.yml with tests, build, linting
+4. Environment: Update all .env.example files, create .env.production.example files
+
+=== PHASE 10: UX ENHANCEMENTS ===
+1. Error boundaries: Create client/src/components/ErrorBoundary.tsx, wrap App
+2. Accessibility: Add ARIA labels, keyboard navigation, focus indicators, WCAG AA compliance
+3. Mobile: Test and fix responsive issues, optimize touch targets
+
+=== PHASE 11: DEMO PREPARATION ===
+1. Demo data: Create server/scripts/seedDemoData.ts with 200+ students, all roles, realistic data
+2. Demo scenarios: Create DEMO_SCENARIOS.md with step-by-step walkthrough for each role
+
+=== PHASE 12: COMPLIANCE ===
+1. Privacy/Terms: Create docs/PRIVACY_POLICY.md and docs/TERMS_OF_SERVICE.md
+2. Data deletion: Implement right-to-deletion endpoint with anonymization, audit logging
+
+IMPLEMENTATION RULES:
+- Work systematically through each phase
+- Test each change before moving to next
+- Update README.md as features are added
+- Commit frequently with descriptive messages
+- Follow existing code style and patterns
+- Add proper TypeScript types
+- Include error handling for all new code
+- Document complex logic with comments
+
+PRIORITY ORDER:
+Week 1-2: Phases 1, 2 (Security & Data Models)
+Week 3: Phase 3 (Logging)
+Week 4-5: Phases 4, 5 (Testing & Admin Panel)
+Week 6: Phases 6, 10, 11 (Docs, UX, Demo)
+Week 7-8: Phases 7, 8, 9 (Performance, Monitoring, Deployment)
+Week 9+: Phase 12 (Compliance)
+
+Start with Phase 1, Task 1.1. Implement each task completely before moving to the next. Ask for clarification if any requirement is unclear.
+
