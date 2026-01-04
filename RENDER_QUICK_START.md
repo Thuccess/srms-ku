@@ -14,17 +14,13 @@
 
 4. **Set Environment Variables**
 
-   **Backend Service:**
-   ```
-   MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/dbname
-   JWT_SECRET=<generate with: openssl rand -base64 32>
-   CLIENT_URL=https://student-risk-frontend.onrender.com
-   ```
-
-   **Frontend Service:**
-   ```
-   VITE_API_URL=https://student-risk-api.onrender.com/api
-   ```
+**Service (Single deployment):**
+```
+MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/dbname
+JWT_SECRET=<generate with: openssl rand -base64 32>
+CLIENT_URL=https://student-risk-system.onrender.com
+SERVE_STATIC=true
+```
 
 5. **Deploy!** Click "Apply"
 
@@ -55,11 +51,12 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 2. **Update API URL**: Set `VITE_API_URL` in frontend to your backend URL
 3. **Test**: Visit your frontend URL and test login
 
-## 📝 Service URLs
+## 📝 Service URL
 
-After deployment, your services will be available at:
-- Frontend: `https://student-risk-frontend.onrender.com`
-- Backend: `https://student-risk-api.onrender.com`
+After deployment, your application will be available at:
+- Application: `https://student-risk-system.onrender.com`
+- API: `https://student-risk-system.onrender.com/api`
+- Health Check: `https://student-risk-system.onrender.com/health`
 
 ## ⚠️ Important Notes
 

@@ -12,7 +12,7 @@ This guide will help you deploy the Student Risk System to Render.
 
 ### Option 1: Blueprint Deployment (Recommended)
 
-This is the easiest way to deploy both services at once using the `render.yaml` file.
+This is the easiest way to deploy using the `render.yaml` file. **Note:** Render Blueprints don't support static site services directly, so we deploy as a single web service that serves both the API and the frontend.
 
 #### Steps:
 
@@ -29,19 +29,16 @@ This is the easiest way to deploy both services at once using the `render.yaml` 
 
 4. **Configure Environment Variables**
    
-   For the **Backend Service** (`student-risk-api`):
+   For the **Service** (`student-risk-system`):
    - `MONGO_URI`: Your MongoDB connection string
      - Format: `mongodb+srv://username:password@cluster.mongodb.net/database-name`
    - `JWT_SECRET`: A strong random string (minimum 32 characters)
      - Generate with: `openssl rand -base64 32`
-   - `CLIENT_URL`: Your frontend URL (will be set after frontend deploys)
-     - Example: `https://student-risk-frontend.onrender.com`
+   - `CLIENT_URL`: Your service URL (set after deployment)
+     - Example: `https://student-risk-system.onrender.com`
    - `OPENAI_API_KEY`: (Optional) Your OpenAI API key for AI features
    - `SENTRY_DSN`: (Optional) Sentry DSN for error tracking
-
-   For the **Frontend Service** (`student-risk-frontend`):
-   - `VITE_API_URL`: Your backend API URL
-     - Example: `https://student-risk-api.onrender.com/api`
+   - `SERVE_STATIC`: Set to `"true"` (already configured in render.yaml)
 
 5. **Deploy**
    - Click "Apply" to create both services
