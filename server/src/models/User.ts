@@ -69,9 +69,9 @@ const userSchema = new Schema<IUser>(
       minlength: 8,
       select: false, // Don't return password by default
       validate: {
-        validator: function(this: IUser, password: string): boolean {
+        validator: function(password: string): boolean {
           // Only validate on new passwords (not when updating other fields)
-          if (!this.isModified('password')) {
+          if (!(this as any).isModified('password')) {
             return true;
           }
           
@@ -147,13 +147,14 @@ userSchema.pre('save', async function() {
   }
   
   // Skip if password is already hashed (starts with $2a$, $2b$, or $2y$)
-  if (this.password && (this.password.startsWith('$2a$') || this.password.startsWith('$2b$') || this.password.startsWith('$2y$'))) {
+  const password = (this as any).password;
+  if (password && (password.startsWith('$2a$') || password.startsWith('$2b$') || password.startsWith('$2y$'))) {
     return;
   }
   
   // Hash the password
   const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  (this as any).password = await bcrypt.hash(password, salt);
 });
 
 // Method to compare passwords

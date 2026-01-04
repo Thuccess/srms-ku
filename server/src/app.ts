@@ -88,7 +88,7 @@ if (process.env.NODE_ENV === 'production' && process.env.SERVE_STATIC === 'true'
   
   // Check if build directory exists
   if (fs.existsSync(clientBuildPath)) {
-    logger.info('Serving static files from', { path: clientBuildPath });
+    console.info('Serving static files from', { path: clientBuildPath });
     
     // Serve static files (CSS, JS, images, etc.)
     app.use(express.static(clientBuildPath));
@@ -102,7 +102,7 @@ if (process.env.NODE_ENV === 'production' && process.env.SERVE_STATIC === 'true'
       res.sendFile(path.join(clientBuildPath, 'index.html'));
     });
   } else {
-    logger.warn('Static files directory not found', { path: clientBuildPath, cwd: process.cwd(), __dirname });
+    console.warn('Static files directory not found', { path: clientBuildPath, cwd: process.cwd(), __dirname });
   }
 }
 

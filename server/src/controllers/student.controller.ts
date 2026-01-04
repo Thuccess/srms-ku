@@ -607,7 +607,7 @@ export const uploadCsvFile = async (req: AuthRequest, res: Response): Promise<vo
         if (existingStudent) {
           // UPDATE existing student - only update allowed fields
           // Support both 'program' (new) and 'course' (backward compatibility)
-          const programName = course || (existingStudent.program || existingStudent.course);
+          const programName = course || (existingStudent.program || (existingStudent as any).course);
           const updateData: any = {
             studentRegistrationNumber: studentRegistrationNumber || existingStudent.studentRegistrationNumber,
             program: programName, // Use 'program' field

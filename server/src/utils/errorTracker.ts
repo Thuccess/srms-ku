@@ -41,7 +41,8 @@ export const initializeErrorTracking = (): void => {
             // Remove sensitive query params
             if (event.request.query_string) {
               const queryString = event.request.query_string;
-              if (queryString.includes('password') || queryString.includes('token')) {
+              const queryStr = typeof queryString === 'string' ? queryString : String(queryString);
+              if (queryStr.includes('password') || queryStr.includes('token')) {
                 event.request.query_string = '[Filtered]';
               }
             }
@@ -143,10 +144,10 @@ export const setUser = (user: { id?: string; email?: string; role?: string } | n
   try {
     if (user) {
       Sentry.setUser({
-        id: user.id,
-        email: user.email,
-        username: user.email,
-        role: user.role,
+        id: user.id || '',
+        email: user.email || '',
+        username: user.email || '',
+        role: user.role || '',
       });
     } else {
       Sentry.setUser(null);
@@ -175,12 +176,15 @@ export const addBreadcrumb = (
   }
 
   try {
-    Sentry.addBreadcrumb({
+    const breadcrumb: any = {
       message,
       category,
       level,
-      data,
-    });
+    };
+    if (data) {
+      breadcrumb.data = data;
+    }
+    Sentry.addBreadcrumb(breadcrumb);
   } catch (err) {
     // Silently fail
   }

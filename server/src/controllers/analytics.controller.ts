@@ -116,7 +116,7 @@ export const getFacultyAnalytics = async (
     // Group by program (within faculty) - support both 'program' and 'course' fields
     const courseStats: Record<string, any> = {};
     students.forEach(s => {
-      const program = s.program || s.course || 'Unknown';
+      const program = s.program || (s as any).course || 'Unknown';
       if (!courseStats[program]) {
         courseStats[program] = {
           total: 0,

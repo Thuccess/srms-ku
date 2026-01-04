@@ -260,8 +260,8 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 
     // Update password
     user.password = password;
-    user.resetToken = undefined;
-    user.resetTokenExpiry = undefined;
+    delete user.resetToken;
+    delete user.resetTokenExpiry;
     await user.save();
 
     res.status(200).json({ message: 'Password has been reset successfully' });
