@@ -1,6 +1,9 @@
-# Deployment Guide for Render
+# Deployment Guide
 
-This guide will help you deploy the Student Risk System to Render.
+This guide covers multiple deployment options for the Student Risk System:
+- **Render** (Cloud Platform)
+- **Docker** (Containerized Deployment)
+- **Manual Deployment** (Any Node.js hosting)
 
 ## Prerequisites
 
@@ -262,6 +265,205 @@ For issues specific to:
 - **Application**: Review application logs in Render dashboard
 - **MongoDB**: Check [MongoDB Atlas Documentation](https://docs.atlas.mongodb.com)
 
+## Docker Deployment
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- MongoDB (local or Atlas)
+
+### Quick Start with Docker Compose
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd student-risk-system
+   ```
+
+2. **Set environment variables**
+   Create a `.env` file in the root directory:
+   ```env
+   JWT_SECRET=your-strong-secret-minimum-32-characters
+   OPENAI_API_KEY=your-openai-key (optional)
+   SENTRY_DSN=your-sentry-dsn (optional)
+   ```
+
+3. **Start all services**
+   ```bash
+   docker-compose up -d
+   ```
+
+   This will start:
+   - MongoDB on port 27017
+   - Backend API on port 5000
+   - Frontend on port 3000
+
+4. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5000
+   - Health Check: http://localhost:5000/health
+
+5. **View logs**
+   ```bash
+   docker-compose logs -f
+   ```
+
+6. **Stop services**
+   ```bash
+   docker-compose down
+   ```
+
+### Using External MongoDB (MongoDB Atlas)
+
+If you prefer to use MongoDB Atlas instead of the local container:
+
+1. **Update `docker-compose.yml`**
+   - Comment out or remove the `mongodb` service
+   - Update `MONGO_URI` in the server environment to your Atlas connection string
+
+2. **Or set environment variable**
+   ```bash
+   MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/db docker-compose up
+   ```
+
+### Building Individual Docker Images
+
+#### Build Server Image
+```bash
+cd server
+docker build -t student-risk-server .
+docker run -p 5000:5000 \
+  -e MONGO_URI=mongodb://localhost:27017/student-risk-system \
+  -e JWT_SECRET=your-secret \
+  student-risk-server
+```
+
+#### Build Client Image
+```bash
+cd client
+docker build --build-arg VITE_API_URL=http://localhost:5000/api -t student-risk-client .
+docker run -p 3000:80 student-risk-client
+```
+
+### Docker Production Deployment
+
+For production deployment with Docker:
+
+1. **Use production environment variables**
+   ```env
+   NODE_ENV=production
+   MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/db
+   JWT_SECRET=strong-production-secret
+   CLIENT_URL=https://your-domain.com
+   LOG_LEVEL=info
+   ```
+
+2. **Use Docker Compose production override**
+   Create `docker-compose.prod.yml`:
+   ```yaml
+   version: '3.8'
+   services:
+     server:
+       environment:
+         NODE_ENV: production
+         SERVE_STATIC: "true"
+     client:
+       build:
+         args:
+           VITE_API_URL: https://your-api-domain.com/api
+   ```
+
+3. **Deploy with production config**
+   ```bash
+   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+   ```
+
+### Docker on Cloud Platforms
+
+#### AWS (ECS/EKS)
+- Build images and push to ECR
+- Create ECS task definitions
+- Configure load balancer and auto-scaling
+
+#### Google Cloud (Cloud Run)
+- Build and push to Container Registry
+- Deploy with Cloud Run
+- Configure environment variables in Cloud Run console
+
+#### Azure (Container Instances)
+- Build and push to Azure Container Registry
+- Deploy with Azure Container Instances
+- Configure environment variables
+
+#### DigitalOcean (App Platform)
+- Connect GitHub repository
+- Use Dockerfile detection
+- Configure environment variables in dashboard
+
+## Manual Deployment
+
+### Server Deployment
+
+1. **Build the server**
+   ```bash
+   cd server
+   npm install
+   npm run build
+   ```
+
+2. **Set environment variables**
+   Create `.env` file (see `server/env.example`)
+
+3. **Start the server**
+   ```bash
+   npm start
+   ```
+
+4. **Use PM2 for process management**
+   ```bash
+   npm install -g pm2
+   pm2 start dist/index.js --name student-risk-api
+   pm2 save
+   pm2 startup
+   ```
+
+### Client Deployment
+
+1. **Build the client**
+   ```bash
+   cd client
+   npm install
+   npm run build
+   ```
+
+2. **Deploy static files**
+   - Copy `client/dist` contents to your web server
+   - Configure web server (Nginx/Apache) for SPA routing
+   - Set environment variable `VITE_API_URL` during build
+
+3. **Nginx Configuration Example**
+   ```nginx
+   server {
+       listen 80;
+       server_name your-domain.com;
+       root /var/www/student-risk-system;
+       index index.html;
+
+       location / {
+           try_files $uri $uri/ /index.html;
+       }
+
+       location /api {
+           proxy_pass http://localhost:5000;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+   }
+   ```
+
 ## Next Steps
 
 After successful deployment:
@@ -272,4 +474,5 @@ After successful deployment:
 4. ✅ Set up custom domain (optional)
 5. ✅ Review security settings
 6. ✅ Set up CI/CD pipeline (optional)
+7. ✅ Review [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) for verification steps
 

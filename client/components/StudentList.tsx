@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { socketService } from '../services/socketService';
-import { mapStudentFromServer, deleteStudent, getStudents } from '../services/apiService';
+import { mapStudentFromServer, deleteStudent, getStudents, getDataIntegrityAlerts } from '../services/apiService';
 import { UserRole } from '../types';
 
 interface StudentListProps {
@@ -83,10 +83,15 @@ const StudentList: React.FC<StudentListProps> = ({ students, setStudents, settin
 
   // Removed debug logging for production
 
+  // Get issue filter from URL query parameter (needed before useEffect)
+  const issueFilter = searchParams.get('issue') || null;
+
   // Auto-refresh from database when component mounts or route changes
+  // When navigating from Registry Dashboard with issue filters, use the same data source
   useEffect(() => {
     // Refresh data from database when Student Directory is opened or route changes
     // This ensures we always have the latest data from the database
+    // When issue filter is present, this will use getDataIntegrityAlerts for consistency with Registry Dashboard
     const refreshOnMount = async () => {
       try {
         await refreshStudentsFromDatabase(false); // Silent refresh on mount/route change
@@ -98,10 +103,7 @@ const StudentList: React.FC<StudentListProps> = ({ students, setStudents, settin
 
     refreshOnMount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, location.search]); // Refresh when route or query params change
-
-  // Get issue filter from URL query parameter
-  const issueFilter = searchParams.get('issue') || null;
+  }, [location.pathname, location.search, issueFilter, settings?.thresholds]); // Refresh when route, query params, or settings change
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -154,79 +156,90 @@ const StudentList: React.FC<StudentListProps> = ({ students, setStudents, settin
 
   // Apply issue filter based on URL parameter
   const issueFilteredStudents = useMemo(() => {
-    if (!issueFilter) return students;
+    if (!Array.isArray(students)) return [];
+    if (!issueFilter) {
+      return students;
+    }
+    
+    // Validate settings exist
+    if (!settings?.thresholds) {
+      console.warn('Settings thresholds not available, returning all students');
+      return students;
+    }
+    
+    const { criticalGpa, warningAttendance, financialLimit } = settings.thresholds;
     
     switch (issueFilter) {
       case 'incomplete':
-        return students.filter(s => !s.studentNumber || !s.course);
+        return students.filter(s => s && (!s.studentNumber || !s.course));
       case 'financial':
         // Financial Issues: Only students whose balance exceeds Financial Hold threshold
         // AND who do NOT have academic issues (low GPA or low attendance)
         return students.filter(s => {
+          if (!s) return false;
           const balanceExceedsThreshold = s.balance != null && 
-            s.balance > settings.thresholds.financialLimit;
+            s.balance > financialLimit;
           if (!balanceExceedsThreshold) return false;
-          const hasLowGPA = s.gpa != null && s.gpa < settings.thresholds.criticalGpa;
-          const hasLowAttendance = s.attendance != null && s.attendance < settings.thresholds.warningAttendance;
+          const hasLowGPA = s.gpa != null && s.gpa < criticalGpa;
+          const hasLowAttendance = s.attendance != null && s.attendance < warningAttendance;
           return !hasLowGPA && !hasLowAttendance;
         });
       case 'all-financial':
         // All Financial Issues: ALL students whose balance exceeds Financial Alert Threshold
         return students.filter(s => {
-          const balanceExceedsThreshold = s.balance != null && 
-            s.balance > settings.thresholds.financialLimit;
-          return balanceExceedsThreshold;
+          if (!s) return false;
+          return s.balance != null && s.balance > financialLimit;
         });
       case 'attendance':
         // Low Attendance: Only students with low attendance ONLY (no financial issues or low GPA)
         return students.filter(s => {
-          const hasLowAttendance = s.attendance != null && s.attendance < settings.thresholds.warningAttendance;
+          if (!s) return false;
+          const hasLowAttendance = s.attendance != null && s.attendance < warningAttendance;
           if (!hasLowAttendance) return false;
-          const hasFinancialIssue = s.balance != null && 
-            s.balance > settings.thresholds.financialLimit;
-          const hasLowGPA = s.gpa != null && s.gpa < settings.thresholds.criticalGpa;
+          const hasFinancialIssue = s.balance != null && s.balance > financialLimit;
+          const hasLowGPA = s.gpa != null && s.gpa < criticalGpa;
           return !hasFinancialIssue && !hasLowGPA;
         });
       case 'all-attendance':
         // All Attendance Risk: ALL students whose attendance is below threshold (matches Data Integrity Alerts)
         return students.filter(s => {
-          return s.attendance != null && s.attendance < settings.thresholds.warningAttendance;
+          if (!s) return false;
+          return s.attendance != null && s.attendance < warningAttendance;
         });
       case 'gpa':
         // All Academic Risk: ALL students whose GPA is below threshold (matches Data Integrity Alerts)
         return students.filter(s => {
-          return s.gpa != null && s.gpa < settings.thresholds.criticalGpa;
+          if (!s) return false;
+          return s.gpa != null && s.gpa < criticalGpa;
         });
       case 'academic':
         // Academic Issues: Only students with low GPA ONLY (no low attendance or financial issues)
         return students.filter(s => {
-          const hasLowGPA = s.gpa != null && s.gpa < settings.thresholds.criticalGpa;
+          if (!s) return false;
+          const hasLowGPA = s.gpa != null && s.gpa < criticalGpa;
           if (!hasLowGPA) return false;
-          const hasLowAttendance = s.attendance != null && s.attendance < settings.thresholds.warningAttendance;
-          const hasFinancialIssue = s.balance != null && 
-            s.balance > settings.thresholds.financialLimit;
+          const hasLowAttendance = s.attendance != null && s.attendance < warningAttendance;
+          const hasFinancialIssue = s.balance != null && s.balance > financialLimit;
           return !hasLowAttendance && !hasFinancialIssue;
         });
       case 'none':
         // Students with No Issues: No financial, attendance, or academic risk issues
         // 100% accurate - matches Data Integrity Alerts logic
         return students.filter(s => {
+          if (!s) return false;
           // Must have complete records
           if (!s.studentNumber || !s.course) return false;
           
           // No financial issues (balance <= threshold)
-          const hasFinancialIssue = s.balance != null && 
-            s.balance > settings.thresholds.financialLimit;
+          const hasFinancialIssue = s.balance != null && s.balance > financialLimit;
           if (hasFinancialIssue) return false;
           
           // No attendance issues (attendance >= threshold)
-          const hasAttendanceIssue = s.attendance != null && 
-            s.attendance < settings.thresholds.warningAttendance;
+          const hasAttendanceIssue = s.attendance != null && s.attendance < warningAttendance;
           if (hasAttendanceIssue) return false;
           
           // No academic issues (GPA >= threshold)
-          const hasAcademicIssue = s.gpa != null && 
-            s.gpa < settings.thresholds.criticalGpa;
+          const hasAcademicIssue = s.gpa != null && s.gpa < criticalGpa;
           if (hasAcademicIssue) return false;
           
           // All checks passed - student has no issues
@@ -235,20 +248,24 @@ const StudentList: React.FC<StudentListProps> = ({ students, setStudents, settin
       default:
         return students;
     }
-  }, [students, issueFilter, settings]);
+  }, [students, issueFilter, settings?.thresholds]);
 
   // Memoized Filter Logic with improved error handling
   const filteredStudents = useMemo(() => {
     if (!issueFilteredStudents || issueFilteredStudents.length === 0) return [];
     
-    return issueFilteredStudents.filter(s => {
-      if (!s || !s.studentNumber || !s.course) return false;
+    const filtered = issueFilteredStudents.filter(s => {
+      // Support both 'course' and 'program' fields (backend uses 'program', frontend uses 'course')
+      const hasCourse = s?.course || (s as any)?.program;
+      if (!s || !s.studentNumber || !hasCourse) {
+        return false;
+      }
       
       const term = debouncedSearchTerm.toLowerCase().trim();
 
       const matchesSearch = term === '' ||
-        s.studentNumber?.toLowerCase().includes(term) ||
-        s.course?.toLowerCase().includes(term) ||
+        (s.studentNumber && s.studentNumber.toLowerCase().includes(term)) ||
+        (s.course && s.course.toLowerCase().includes(term)) ||
         String(s.semesterOfStudy || '').toLowerCase().includes(term);
 
       const matchesYear = yearFilter === 'All' || (s.yearOfStudy && s.yearOfStudy.toString() === yearFilter);
@@ -257,6 +274,7 @@ const StudentList: React.FC<StudentListProps> = ({ students, setStudents, settin
       
       return matchesSearch && matchesYear && matchesProgram && matchesSemester;
     });
+    return filtered;
   }, [issueFilteredStudents, debouncedSearchTerm, yearFilter, programFilter, semesterFilter]);
 
   // Safety check for filteredStudents
@@ -297,17 +315,19 @@ const StudentList: React.FC<StudentListProps> = ({ students, setStudents, settin
         'Attendance',
         'Balance',
       ];
-      const rows = studentsToExport.map(s => {
-        return [
-          escapeCsvField(s.studentNumber),
-          escapeCsvField(s.course),
-          escapeCsvField(s.yearOfStudy),
-          escapeCsvField(s.semesterOfStudy),
-          escapeCsvField(s.gpa),
-          escapeCsvField(s.attendance),
-          escapeCsvField(s.balance),
-        ];
-      });
+      const rows = studentsToExport
+        .filter(s => s && s.studentNumber) // Filter out invalid students
+        .map(s => {
+          return [
+            escapeCsvField(s.studentNumber || ''),
+            escapeCsvField(s.course || ''),
+            escapeCsvField(s.yearOfStudy || 1),
+            escapeCsvField(s.semesterOfStudy || '1'),
+            escapeCsvField(s.gpa || 0),
+            escapeCsvField(s.attendance || 0),
+            escapeCsvField(s.balance || 0),
+          ];
+        });
 
       const csvContent = [
         headers.join(','),
@@ -529,12 +549,66 @@ const StudentList: React.FC<StudentListProps> = ({ students, setStudents, settin
   }, [notificationMessage, selectedIds, notificationSettings.channels, addToast]);
 
   // Refresh students from database
+  // When issue filter is present, use getDataIntegrityAlerts for consistency with Registry Dashboard
   const refreshStudentsFromDatabase = useCallback(async (showToast = false) => {
     try {
-      const data = await getStudents();
-      const studentsArray = Array.isArray(data) 
-        ? data 
-        : (data as any).students || [];
+      let studentsArray: Student[] = [];
+      
+      // If there's an issue filter, use getDataIntegrityAlerts for 100% accurate data (same as Registry Dashboard)
+      if (issueFilter && settings?.thresholds) {
+        try {
+          const dataIntegrityData = await getDataIntegrityAlerts({
+            criticalGpa: settings.thresholds.criticalGpa,
+            warningAttendance: settings.thresholds.warningAttendance,
+            financialLimit: settings.thresholds.financialLimit,
+          });
+          
+          // Get students from the appropriate category based on issue filter
+          switch (issueFilter) {
+            case 'all-financial':
+              studentsArray = dataIntegrityData.students.financialRisk;
+              break;
+            case 'all-attendance':
+              studentsArray = dataIntegrityData.students.attendanceRisk;
+              break;
+            case 'gpa':
+              studentsArray = dataIntegrityData.students.academicRisk;
+              break;
+            case 'none':
+              studentsArray = dataIntegrityData.students.noIssues || [];
+              break;
+            case 'incomplete':
+              studentsArray = dataIntegrityData.students.incompleteRecords;
+              break;
+            default:
+              // For other filters, combine relevant categories
+              studentsArray = [
+                ...dataIntegrityData.students.financialRisk,
+                ...dataIntegrityData.students.attendanceRisk,
+                ...dataIntegrityData.students.academicRisk,
+              ];
+              // Remove duplicates
+              const uniqueMap = new Map<string, Student>();
+              studentsArray.forEach(s => {
+                if (s.id) uniqueMap.set(s.id, s);
+              });
+              studentsArray = Array.from(uniqueMap.values());
+          }
+        } catch (integrityError) {
+          // Fallback to regular getStudents if getDataIntegrityAlerts fails
+          console.warn('Failed to fetch from data integrity alerts, falling back to getStudents:', integrityError);
+          const data = await getStudents();
+          studentsArray = Array.isArray(data) 
+            ? data 
+            : (data as any).students || [];
+        }
+      } else {
+        // No issue filter - use regular getStudents
+        const data = await getStudents();
+        studentsArray = Array.isArray(data) 
+          ? data 
+          : (data as any).students || [];
+      }
       
       if (studentsArray.length > 0) {
         setStudents(studentsArray);
@@ -565,7 +639,7 @@ const StudentList: React.FC<StudentListProps> = ({ students, setStudents, settin
         addToast(errorMessage, 'error');
       }
     }
-  }, [setStudents, addToast]);
+  }, [setStudents, addToast, issueFilter, settings?.thresholds]);
 
   // Manual refresh handler
   const handleManualRefresh = useCallback(async () => {
@@ -599,7 +673,22 @@ const StudentList: React.FC<StudentListProps> = ({ students, setStudents, settin
       addToast(`Student ${student.studentNumber} deleted successfully`, 'success');
     } catch (error: any) {
       console.error('Delete student error:', error);
-      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to delete student';
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Failed to delete student';
+      
+      if (error?.response?.status === 429) {
+        errorMessage = error?.message || 'Too many requests. Please wait a moment and try again.';
+      } else if (error?.response?.status === 403) {
+        errorMessage = 'Access denied. Only REGISTRY can delete students.';
+      } else if (error?.response?.status === 404) {
+        errorMessage = 'Student not found.';
+      } else if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       addToast(errorMessage, 'error');
     } finally {
       setProcessing(false);

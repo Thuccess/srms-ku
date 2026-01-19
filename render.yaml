@@ -1,30 +1,78 @@
+# Render Blueprint Configuration
+# This file configures deployment to Render.com
+# Supports both single-service and separate service deployments
+
 services:
-  # Full-stack Service (Backend API + Frontend)
+  # Option 1: Single Service (Backend serves both API and frontend)
+  # Recommended for simpler deployments
   - type: web
     name: student-risk-system
     env: node
-    plan: starter
     region: oregon
-    buildCommand: npm run build
-    startCommand: npm start
-    healthCheckPath: /health
+    plan: starter
+    buildCommand: |
+      cd server && npm install && npm run build &&
+      cd ../client && npm install && npm run build
+    startCommand: cd server && npm start
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 10000
       - key: SERVE_STATIC
         value: "true"
       - key: MONGO_URI
-        sync: false
+        sync: false  # Set this in Render dashboard
       - key: JWT_SECRET
-        sync: false
+        sync: false  # Set this in Render dashboard (min 32 chars)
       - key: CLIENT_URL
-        sync: false
+        generateValue: true  # Will be set to service URL automatically
       - key: OPENAI_API_KEY
-        sync: false
-        optional: true
+        sync: false  # Optional - set if using AI features
       - key: SENTRY_DSN
-        sync: false
-        optional: true
+        sync: false  # Optional - set for error tracking
       - key: LOG_LEVEL
         value: info
+    healthCheckPath: /health
 
+  # Option 2: Separate Services (Uncomment to use instead of single service)
+  # Uncomment the services below and comment out the single service above
+  
+  # Backend API Service
+  # - type: web
+  #   name: student-risk-api
+  #   env: node
+  #   region: oregon
+  #   plan: starter
+  #   buildCommand: cd server && npm install && npm run build
+  #   startCommand: cd server && npm start
+  #   envVars:
+  #     - key: NODE_ENV
+  #       value: production
+  #     - key: PORT
+  #       value: 10000
+  #     - key: SERVE_STATIC
+  #       value: "false"
+  #     - key: MONGO_URI
+  #       sync: false
+  #     - key: JWT_SECRET
+  #       sync: false
+  #     - key: CLIENT_URL
+  #       sync: false  # Set to frontend URL after deployment
+  #     - key: OPENAI_API_KEY
+  #       sync: false
+  #     - key: SENTRY_DSN
+  #       sync: false
+  #     - key: LOG_LEVEL
+  #       value: info
+  #   healthCheckPath: /health
+
+  # Frontend Static Site
+  # - type: web
+  #   name: student-risk-frontend
+  #   env: static
+  #   buildCommand: cd client && npm install && npm run build
+  #   staticPublishPath: client/dist
+  #   envVars:
+  #     - key: VITE_API_URL
+  #       sync: false  # Set to backend API URL after deployment
