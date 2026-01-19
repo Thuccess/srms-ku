@@ -11,8 +11,7 @@ services:
     region: oregon
     plan: starter
     buildCommand: |
-      cd server && npm install && npm run build &&
-      cd ../client && npm install && npm run build
+      cd server && npm install && npm run build && cd ../client && npm install && npm run build || exit 1
     startCommand: cd server && npm start
     envVars:
       - key: NODE_ENV
@@ -67,7 +66,20 @@ services:
   #       value: info
   #   healthCheckPath: /health
 
-  # Frontend Static Site
+  # Frontend Docker Service (Recommended - uses Dockerfile)
+  # - type: web
+  #   name: srms-ku-client
+  #   env: docker
+  #   dockerfilePath: ./client/Dockerfile
+  #   dockerContext: ./client
+  #   region: oregon
+  #   plan: starter
+  #   envVars:
+  #     - key: VITE_API_URL
+  #       value: https://srms-ku.onrender.com/api  # Update with your backend URL
+  #   healthCheckPath: /health
+
+  # Frontend Static Site (Alternative - if not using Docker)
   # - type: web
   #   name: student-risk-frontend
   #   env: static
