@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Student, RiskLevel, Intervention, InterventionType, SystemSettings } from '../types';
-import { ArrowLeft, Brain, Send, AlertTriangle, CheckCircle, Mail, DollarSign, BookOpen, Clock, Calendar, MessageSquare, ChevronDown, Sparkles, Phone, User, GraduationCap, Hash, Building2 } from 'lucide-react';
+import { ArrowLeft, Send, AlertTriangle, CheckCircle, Mail, DollarSign, BookOpen, Clock, Calendar, MessageSquare, ChevronDown, Sparkles, Phone, User, GraduationCap, Hash, Building2 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { socketService } from '../services/socketService';
@@ -16,7 +16,6 @@ interface StudentDetailProps {
 const StudentDetail: React.FC<StudentDetailProps> = ({ students, updateStudent, settings }) => {
   const { id } = useParams<{ id: string }>();
   const student = students.find(s => s.id === id);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [interventionNote, setInterventionNote] = useState('');
   const [notificationSent, setNotificationSent] = useState(false);
   const { addToast } = useToast();
@@ -87,53 +86,6 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ students, updateStudent, 
   };
   const interventions = (student as any).interventions || [];
 
-  const handleAIAnalysis = async () => {
-    setIsAnalyzing(true);
-    addToast('Starting risk analysis...', 'info');
-    
-    try {
-      // Use server's risk prediction endpoint (rules-based)
-      const prediction = await predictRisk({
-        studentId: student.studentNumber,
-        gpa: student.gpa || 0,
-        attendanceRate: student.attendance || 0,
-        year: student.yearOfStudy || 1,
-      });
-
-      // Server returns riskScore as 0-100, riskLevel as uppercase
-      const riskScore = prediction.riskScore || 0;
-      const riskLevel = normalizeRiskLevel(prediction.riskLevel);
-      const riskFactors = prediction.riskFactors || riskProfile.riskFactors || [];
-      
-      const updatedStudent = {
-        ...student,
-        riskScore,
-        riskLevel,
-        riskProfile: {
-          ...riskProfile,
-          riskScore,
-          riskLevel,
-          lastAnalyzed: new Date().toISOString(),
-          riskFactors,
-          recommendation: generateRecommendation(riskLevel, student),
-        },
-      } as any;
-
-      // Update student on server
-      const serverUpdated = await updateStudentAPI(student.studentNumber || student.id, updatedStudent);
-      updateStudent(mapStudentFromServer(serverUpdated));
-      
-      addToast('Risk analysis completed successfully', 'success');
-    } catch (error: any) {
-      console.error('Risk prediction error:', error);
-      
-      // Check if it's a specific error from the backend
-      const errorMessage = error?.response?.data?.error || error?.message || 'Unknown error';
-      addToast(`Analysis failed: ${errorMessage}`, 'error');
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
 
   // Helper function to normalize risk level
   const normalizeRiskLevel = (level: string | RiskLevel): RiskLevel => {
@@ -258,7 +210,6 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ students, updateStudent, 
             <div>
               <h1 className="text-4xl lg:text-5xl font-black bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent tracking-tighter mb-3">{student.studentNumber}</h1>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-600 text-sm font-bold">
-                <span className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-slate-100 to-slate-50 rounded-xl border border-slate-200 text-slate-700 shadow-sm font-mono">{student.studentRegistrationNumber}</span>
                 <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>{student.course}</span>
                 <span className="flex items-center gap-2 px-2.5 py-1 bg-slate-100 rounded-lg border border-slate-200">Year {student.yearOfStudy}</span>
                 {student.semesterOfStudy && (
@@ -299,16 +250,6 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ students, updateStudent, 
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Student Number</p>
                   <p className="text-sm font-mono font-semibold text-slate-900">
                     {student.studentNumber || 'Not provided'}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-slate-50 to-slate-100/50 rounded-xl border border-slate-200">
-                <Hash size={18} className="text-slate-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Registration Number</p>
-                  <p className="text-sm font-mono font-semibold text-slate-900 break-all">
-                    {student.studentRegistrationNumber || 'Not provided'}
                   </p>
                 </div>
               </div>
@@ -405,81 +346,8 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ students, updateStudent, 
           </div>
         </div>
 
-        {/* Middle Column: AI & Actions */}
+        {/* Middle Column: Actions */}
         <div className="lg:col-span-8 space-y-8">
-           {/* AI Analysis Card - Only show if user can view risk scores */}
-           {canViewRisk && (
-             <div className="bg-[#0f172a] rounded-[2.5rem] shadow-2xl p-8 lg:p-10 text-white relative overflow-hidden group border border-slate-800">
-             {/* Gradient Orbs */}
-             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-ku-600/30 rounded-full blur-[100px] -mr-32 -mt-32 animate-pulse-slow"></div>
-             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-600/20 rounded-full blur-[80px] -ml-20 -mb-20"></div>
-             
-             <div className="flex flex-col md:flex-row justify-between items-start mb-8 relative z-10 gap-6">
-               <div className="flex items-start gap-4">
-                 <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10">
-                   <Brain className="text-ku-300" size={32} />
-                 </div>
-                 <div>
-                   <h2 className="text-2xl font-bold flex items-center gap-3 tracking-tight">
-                     Gemini Prediction Engine
-                   </h2>
-                   <div className="flex items-center gap-2 mt-1">
-                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                     <p className="text-slate-400 text-sm font-medium">Model 2.5 Flash • 98% Confidence</p>
-                   </div>
-                 </div>
-               </div>
-               <button
-                 onClick={handleAIAnalysis}
-                 disabled={isAnalyzing}
-                 aria-busy={isAnalyzing}
-                 aria-label="Refresh AI risk analysis"
-                 className="bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-md px-6 py-3 rounded-xl font-bold text-sm transition-all disabled:opacity-70 flex items-center gap-2.5 text-white shadow-lg hover:shadow-ku-500/20 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-slate-900"
-               >
-                 {isAnalyzing ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Analysing...
-                    </>
-                 ) : (
-                    <>
-                      <Sparkles size={16} className="text-yellow-300" /> Refresh Analysis
-                    </>
-                 )}
-               </button>
-             </div>
-
-             <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2 bg-slate-900/50 border border-white/10 p-6 rounded-3xl backdrop-blur-md shadow-inner">
-                   <p className="text-ku-300 text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
-                     <Sparkles size={12} /> Strategic Recommendation
-                   </p>
-                   <p className="text-lg leading-relaxed font-medium text-slate-100">{riskProfile.recommendation}</p>
-                </div>
-                <div className="space-y-3">
-                   <p className="text-ku-300 text-xs font-bold uppercase tracking-widest mb-1 pl-1">Identified Factors</p>
-                   {riskProfile.riskFactors && riskProfile.riskFactors.length > 0 ? (
-                      riskProfile.riskFactors.map((factor, idx) => (
-                        <div key={idx} className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 text-red-200 px-4 py-3 rounded-2xl text-sm font-medium">
-                           <AlertTriangle size={16} className="mt-0.5 flex-shrink-0 text-red-400" />
-                           {factor}
-                        </div>
-                      ))
-                   ) : (
-                      <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 px-4 py-3 rounded-2xl text-sm font-medium">
-                           <CheckCircle size={16} className="text-emerald-400" /> No significant risks
-                      </div>
-                   )}
-                </div>
-             </div>
-             
-             <div className="mt-8 pt-6 border-t border-white/5 text-[11px] text-slate-500 flex justify-between items-center relative z-10 font-mono uppercase tracking-wider">
-                <span>Last updated: {new Date(riskProfile.lastAnalyzed).toLocaleString()}</span>
-                <span>Session ID: {student.id.substring(0,8)}</span>
-             </div>
-           </div>
-           )}
-
            {/* Actions Grid */}
            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                {/* Communication */}

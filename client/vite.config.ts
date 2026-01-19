@@ -17,13 +17,8 @@ export default defineConfig({
     // Production build optimizations
     outDir: 'dist',
     sourcemap: false, // Disable source maps in production for security
-    minify: 'terser', // Use terser for better minification
-    terserOptions: {
-      compress: {
-        drop_console: true, // Remove console.log in production
-        drop_debugger: true,
-      },
-    },
+    minify: 'esbuild', // Use esbuild for faster minification (terser also available as fallback)
+    // Note: esbuild is faster, but terser is installed for legacy/CI compatibility
     // Code splitting and chunk optimization
     rollupOptions: {
       output: {

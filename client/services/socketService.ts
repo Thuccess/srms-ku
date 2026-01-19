@@ -1,7 +1,26 @@
 import { io, Socket } from 'socket.io-client';
 import { Student, RiskLevel } from '../types';
 
-const SERVER_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+// Construct Socket.io server URL from API URL
+// Handles both /api and non-/api URLs
+const getServerUrl = (): string => {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  
+  // If URL ends with /api, remove it
+  if (apiUrl.endsWith('/api')) {
+    return apiUrl.slice(0, -4);
+  }
+  
+  // If URL contains /api, remove it
+  if (apiUrl.includes('/api')) {
+    return apiUrl.replace('/api', '');
+  }
+  
+  // Otherwise, use as-is (assumes it's the base server URL)
+  return apiUrl;
+};
+
+const SERVER_URL = getServerUrl();
 
 class SocketService {
   private socket: Socket | null = null;
@@ -22,16 +41,25 @@ class SocketService {
 
     this.socket.on('connect', () => {
       this.isConnected = true;
-      console.log('✅ Socket.io connected:', this.socket?.id);
+      // Log only in development
+      if (import.meta.env.DEV) {
+        console.log('✅ Socket.io connected:', this.socket?.id);
+      }
     });
 
     this.socket.on('disconnect', () => {
       this.isConnected = false;
-      console.log('❌ Socket.io disconnected');
+      // Log only in development
+      if (import.meta.env.DEV) {
+        console.log('❌ Socket.io disconnected');
+      }
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('Socket.io connection error:', error);
+      // Always log errors, but use proper error logging in production
+      if (import.meta.env.DEV) {
+        console.error('Socket.io connection error:', error);
+      }
       this.isConnected = false;
     });
   }

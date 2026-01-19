@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IStudent extends Document {
   // Allowed fields only
   studentNumber: string;
-  studentRegistrationNumber: string;
+  studentRegistrationNumber?: string; // Optional field to satisfy database unique index constraint
   program: string; // Program name (renamed from 'course' for clarity)
   yearOfStudy: number;
   semesterOfStudy: '1' | '2';
@@ -30,9 +30,8 @@ const studentSchema = new Schema<IStudent>(
     },
     studentRegistrationNumber: {
       type: String,
-      required: true,
-      unique: true,
-      index: true,
+      required: false, // Optional - set to studentNumber when creating to satisfy DB unique index
+      sparse: true, // Sparse index allows multiple null values, but unique values must be unique
     },
     program: {
       type: String,

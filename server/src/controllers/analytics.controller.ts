@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware.js';
 import { UserRole } from '../models/User.js';
 import Student from '../models/Student.js';
 import { buildStudentScopeFilter, canViewRiskScores } from '../middleware/rbac.middleware.js';
+import logger from '../utils/logger.js';
 
 /**
  * Analytics Controller
@@ -69,7 +70,7 @@ export const getUniversityAnalytics = async (
       students: [],
     });
   } catch (error: any) {
-    console.error('University analytics error:', error);
+    logger.error('University analytics error:', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to fetch university analytics' });
   }
 };
@@ -143,7 +144,7 @@ export const getFacultyAnalytics = async (
       students: [],
     });
   } catch (error: any) {
-    console.error('Faculty analytics error:', error);
+    logger.error('Faculty analytics error:', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to fetch faculty analytics' });
   }
 };
@@ -200,7 +201,7 @@ export const getDepartmentAnalytics = async (
       students: [],
     });
   } catch (error: any) {
-    console.error('Department analytics error:', error);
+    logger.error('Department analytics error:', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to fetch department analytics' });
   }
 };
@@ -253,7 +254,7 @@ export const getRegistryMetrics = async (
       },
     });
   } catch (error: any) {
-    console.error('Registry metrics error:', error);
+    logger.error('Registry metrics error:', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to fetch registry metrics' });
   }
 };
@@ -291,7 +292,7 @@ export const getAnalytics = async (
         return;
     }
   } catch (error: any) {
-    console.error('Analytics error:', error);
+    logger.error('Analytics error:', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 };

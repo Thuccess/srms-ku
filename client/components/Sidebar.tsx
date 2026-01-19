@@ -21,6 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
       'LECTURER': 'Course Lecturer',
       'REGISTRY': 'Registry Staff',
       'IT_ADMIN': 'IT Administrator',
+      'RECEPTIONIST': 'Receptionist',
     };
     return roleMap[role] || role;
   };
@@ -86,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
           </NavLink>
           
           {/* Students Directory - Only show if user can view individual students */}
-          {user && (user.role !== 'VC' && user.role !== 'DVC_ACADEMIC' && user.role !== 'IT_ADMIN') && (
+          {user && (user.role !== 'VC' && user.role !== 'DVC_ACADEMIC' && user.role !== 'IT_ADMIN' && user.role !== 'RECEPTIONIST') && (
             <>
               <p className="px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 mt-8 opacity-80" aria-hidden="true">Academic</p>
               <NavLink 
@@ -113,7 +114,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout }) => {
             </>
           )}
           
-          {/* System Settings - Only show for REGISTRY and IT_ADMIN */}
+          {/* System Settings - Only show for REGISTRY and IT_ADMIN (not RECEPTIONIST) */}
           {user && (user.role === 'REGISTRY' || user.role === 'IT_ADMIN') && (
             <>
               <p className="px-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 mt-8 opacity-80" aria-hidden="true">Configuration</p>

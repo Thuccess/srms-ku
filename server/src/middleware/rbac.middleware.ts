@@ -4,6 +4,7 @@ import { UserRole } from '../models/User.js';
 import Student from '../models/Student.js';
 import mongoose from 'mongoose';
 import { getProgramsForFaculty, getProgramsForDepartment, getCoursesForLecturer, isStudentEnrolledInCourse } from '../services/mappingService.js';
+import logger from '../utils/logger.js';
 
 /**
  * Role-Based Access Control (RBAC) Middleware
@@ -174,8 +175,8 @@ export const enforceStudentScope = async (
     // Attach scope filter to request for use in controllers
     (req as any).scopeFilter = await buildStudentScopeFilter(req.user);
     next();
-  } catch (error) {
-    console.error('Error building student scope filter:', error);
+  } catch (error: any) {
+    logger.error('Error building student scope filter:', { error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to determine access scope' });
   }
 };
@@ -212,8 +213,8 @@ export const canViewStudent = async (
     });
 
     return !!student;
-  } catch (error) {
-    console.error('Error checking student access:', error);
+  } catch (error: any) {
+    logger.error('Error checking student access:', { error: error.message, stack: error.stack });
     return false;
   }
 };

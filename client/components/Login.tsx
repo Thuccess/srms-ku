@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GraduationCap, ArrowRight, Lock, Mail, Loader2, Info, AlertCircle } from 'lucide-react';
+import { GraduationCap, ArrowRight, Lock, Mail, Loader2, Info, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,6 +15,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const validateEmail = (value: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -157,19 +158,32 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
               <input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={handlePasswordChange}
                 aria-invalid={!!passwordError}
                 aria-describedby={passwordError ? 'password-error' : undefined}
-                className={`w-full pl-11 pr-4 py-3.5 bg-white/80 backdrop-blur-sm border rounded-xl focus:ring-2 focus:ring-ku-500/30 focus:border-ku-500 outline-none transition-all font-medium text-slate-800 placeholder:text-slate-400 shadow-sm hover:shadow-md ${
+                className={`w-full pl-11 pr-12 py-3.5 bg-white/80 backdrop-blur-sm border rounded-xl focus:ring-2 focus:ring-ku-500/30 focus:border-ku-500 outline-none transition-all font-medium text-slate-800 placeholder:text-slate-400 shadow-sm hover:shadow-md ${
                   passwordError 
                     ? 'border-red-300 focus:border-red-500 focus:ring-red-500/30' 
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
                 placeholder="••••••••"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors focus:outline-none focus:text-ku-600"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={0}
+              >
+                {showPassword ? (
+                  <EyeOff size={20} strokeWidth={2} />
+                ) : (
+                  <Eye size={20} strokeWidth={2} />
+                )}
+              </button>
             </div>
             {passwordError && (
               <p id="password-error" className="text-xs text-red-600 font-medium flex items-center gap-1.5 mt-1" role="alert">
@@ -241,6 +255,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <div><span className="font-semibold">Lecturer:</span> lecturer@ku.ac.ug / lecturer123456</div>
                 <div><span className="font-semibold">Registry:</span> registry@ku.ac.ug / registry123456</div>
                 <div><span className="font-semibold">Admin:</span> admin@ku.ac.ug / admin123456</div>
+                <div><span className="font-semibold">Receptionist:</span> receptionist@ku.ac.ug / receptionist123456</div>
               </div>
             </div>
           </div>

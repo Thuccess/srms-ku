@@ -7,6 +7,7 @@ import {
   deleteStudent,
   downloadCsvFile,
   uploadCsvFile,
+  importFromServerCsv,
   getDataIntegrityAlerts,
 } from '../controllers/student.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
@@ -36,6 +37,9 @@ router.get('/export/csv', downloadCsvFile);
 
 // Upload CSV file (REGISTRY only) - automatically updates exports/students.csv
 router.post('/import/csv', uploadCsvFile);
+
+// Import from server CSV file (REGISTRY only) - reads server/exports/students.csv and imports it
+router.post('/import/server-csv', importFromServerCsv);
 
 // Create student (REGISTRY only)
 router.post('/', createStudent);

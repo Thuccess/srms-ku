@@ -4,6 +4,7 @@ import { UserRole } from '../types';
 import { Student, SystemSettings } from '../types';
 import UniversityDashboard from './dashboards/UniversityDashboard';
 import RegistryDashboard from './dashboards/RegistryDashboard';
+import ReceptionistDashboard from './dashboards/ReceptionistDashboard';
 import Dashboard from './Dashboard'; // Keep existing dashboard for HOD, ADVISOR, LECTURER
 
 interface RoleBasedDashboardProps {
@@ -22,6 +23,7 @@ interface RoleBasedDashboardProps {
  * - LECTURER: Course dashboard (risk indicators for enrolled students)
  * - REGISTRY: Records dashboard (data integrity, no AI risk scores)
  * - IT_ADMIN: System health dashboard (no academic data)
+ * - RECEPTIONIST: Attendance digitization dashboard (attendance only)
  */
 const RoleBasedDashboard: React.FC<RoleBasedDashboardProps> = ({ students, settings }) => {
   const { user } = useAuth();
@@ -84,6 +86,10 @@ const RoleBasedDashboard: React.FC<RoleBasedDashboardProps> = ({ students, setti
           </div>
         </div>
       );
+
+    case UserRole.RECEPTIONIST:
+      // Attendance digitization dashboard (attendance only)
+      return <ReceptionistDashboard />;
 
     default:
       return (

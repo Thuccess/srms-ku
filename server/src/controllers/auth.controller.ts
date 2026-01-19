@@ -78,6 +78,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
+    // Log login attempt (only in development or with debug logging)
+    if (process.env.NODE_ENV !== 'production' || process.env.LOG_LEVEL === 'debug') {
+      logger.info('[LOGIN] Login attempt', { 
+        email: email?.toLowerCase(),
+        hasPassword: !!password 
+      });
+    }
+
     if (!email || !password) {
       res.status(400).json({ error: 'Email and password are required' });
       return;
@@ -87,19 +95,33 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     
     if (!user) {
+      // Log failed login attempt (security event)
+      logger.warn('[LOGIN] User not found', { email: email.toLowerCase() });
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
 
+    // Log user found (only in debug mode)
+    if (process.env.NODE_ENV !== 'production' || process.env.LOG_LEVEL === 'debug') {
+      logger.info('[LOGIN] User found', {
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+      });
+    }
+
     if (!user.isActive) {
+      logger.warn('[LOGIN] Account deactivated', { email: user.email, role: user.role });
       res.status(403).json({ error: 'Account is deactivated. Please contact administrator.' });
       return;
     }
 
     // Compare passwords
     const isPasswordValid = await user.comparePassword(password);
+
     if (!isPasswordValid) {
-      logger.warn('Login failed: Invalid password', { email: user.email });
+      // Log failed login attempt (security event)
+      logger.warn('[LOGIN] Invalid password', { email: user.email, role: user.role });
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }

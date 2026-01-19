@@ -12,7 +12,7 @@ import Breadcrumbs from './components/Breadcrumbs';
 import { ToastProvider, useToast } from './context/ToastContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { MOCK_STUDENTS } from './constants';
-import { Student, SystemSettings } from './types';
+import { Student, SystemSettings, UserRole } from './types';
 import { getStudents, addStudent as apiAddStudent, updateStudent as apiUpdateStudent } from './services/apiService';
 import { socketService } from './services/socketService';
 import { mapStudentFromServer } from './services/apiService';
@@ -34,7 +34,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
 
 const AppContent: React.FC = () => {
   const { addToast } = useToast();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
 
   // Students are sourced from the backend (MongoDB) where possible.
   const [students, setStudents] = useState<Student[]>([]);
@@ -264,20 +264,54 @@ const AppContent: React.FC = () => {
   };
 
   const addStudents = (newStudents: Student[]) => {
-    // Optimistic UI update
-    setStudents(prev => [...newStudents, ...prev]);
-
-    // Persist each new student to backend
-    Promise.all(newStudents.map(s => apiAddStudent(s))).then((savedStudents) => {
+    // Validate input
+    if (!Array.isArray(newStudents) || newStudents.length === 0) {
+      console.warn('addStudents called with invalid or empty array');
+      return;
+    }
+    
+    // Check if this is a full refresh (from server CSV import or getStudents)
+    // Full refresh: All students have proper IDs and come from server
+    // Partial add: New students to be added to existing list
+    const isFullRefresh = newStudents.length > 0 && 
+      newStudents.every(s => s && s.id && s.studentNumber) &&
+      (students.length === 0 || newStudents.length >= students.length * 0.5); // If more than 50% of current, likely a refresh
+    
+    if (isFullRefresh) {
+      // This is a full refresh from server - replace all students
+      setStudents(newStudents);
+      
+      // Update cache
+      try {
+        localStorage.setItem('ku_students_cache', JSON.stringify(newStudents));
+        localStorage.setItem('ku_students_cache_timestamp', new Date().toISOString());
+      } catch (cacheError) {
+        console.warn('Failed to update cache:', cacheError);
+      }
+    } else {
+      // Optimistic UI update for new students
       setStudents(prev => {
-        // Replace optimistic entries with saved ones where possible
-        const remaining = prev.filter(s => !newStudents.some(ns => ns.id === s.id));
-        return [...savedStudents, ...remaining];
+        // Filter out any duplicates before adding
+        const existingIds = new Set(prev.map(s => s.id));
+        const uniqueNewStudents = newStudents.filter(s => s && s.id && !existingIds.has(s.id));
+        return [...uniqueNewStudents, ...prev];
       });
-    }).catch((error) => {
-      console.error('Failed to bulk-create students on server:', error);
-      addToast('Failed to import some students to the server.', 'error');
-    });
+
+      // Persist each new student to backend
+      const validStudents = newStudents.filter(s => s && s.id && s.studentNumber);
+      if (validStudents.length > 0) {
+        Promise.all(validStudents.map(s => apiAddStudent(s))).then((savedStudents) => {
+          setStudents(prev => {
+            // Replace optimistic entries with saved ones where possible
+            const remaining = prev.filter(s => !validStudents.some(ns => ns.id === s.id));
+            return [...savedStudents.filter(s => s), ...remaining];
+          });
+        }).catch((error) => {
+          console.error('Failed to bulk-create students on server:', error);
+          addToast('Failed to import some students to the server.', 'error');
+        });
+      }
+    }
   };
 
   return (
@@ -324,32 +358,36 @@ const AppContent: React.FC = () => {
                   >
                     Home
                   </NavLink>
-                  <NavLink
-                    to="/students"
-                    className={({ isActive }) =>
-                      `px-3 py-2 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-ku-500 focus:ring-offset-2 ${
-                        isActive
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                      }`
-                    }
-                    aria-label="Students Directory"
-                  >
-                    Students
-                  </NavLink>
-                  <NavLink
-                    to="/settings"
-                    className={({ isActive }) =>
-                      `px-3 py-2 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-ku-500 focus:ring-offset-2 ${
-                        isActive
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                      }`
-                    }
-                    aria-label="System Settings"
-                  >
-                    Settings
-                  </NavLink>
+                  {user && user.role !== UserRole.RECEPTIONIST && (
+                    <NavLink
+                      to="/students"
+                      className={({ isActive }) =>
+                        `px-3 py-2 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-ku-500 focus:ring-offset-2 ${
+                          isActive
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`
+                      }
+                      aria-label="Students Directory"
+                    >
+                      Students
+                    </NavLink>
+                  )}
+                  {user && (user.role === 'REGISTRY' || user.role === 'IT_ADMIN') && (
+                    <NavLink
+                      to="/settings"
+                      className={({ isActive }) =>
+                        `px-3 py-2 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-ku-500 focus:ring-offset-2 ${
+                          isActive
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`
+                      }
+                      aria-label="System Settings"
+                    >
+                      Settings
+                    </NavLink>
+                  )}
                 </nav>
               </div>
               {/* Breadcrumbs for desktop */}
@@ -363,21 +401,37 @@ const AppContent: React.FC = () => {
                 />
                 <Route 
                   path="/students" 
-                  element={<StudentList students={students} setStudents={setStudents} settings={settings} />} 
+                  element={
+                    user?.role === UserRole.RECEPTIONIST ? (
+                      <Navigate to="/" replace />
+                    ) : (
+                      <StudentList students={students} setStudents={setStudents} settings={settings} />
+                    )
+                  } 
                 />
                 <Route 
                   path="/students/:id" 
-                  element={<StudentDetail students={students} updateStudent={updateStudent} settings={settings} />} 
+                  element={
+                    user?.role === UserRole.RECEPTIONIST ? (
+                      <Navigate to="/" replace />
+                    ) : (
+                      <StudentDetail students={students} updateStudent={updateStudent} settings={settings} />
+                    )
+                  } 
                 />
                 <Route 
                   path="/settings" 
                   element={
-                    <Settings 
-                      onAddStudent={addStudent} 
-                      onAddStudents={addStudents} 
-                      settings={settings}
-                      onUpdateSettings={setSettings}
-                    />
+                    user?.role === UserRole.RECEPTIONIST ? (
+                      <Navigate to="/" replace />
+                    ) : (
+                      <Settings 
+                        onAddStudent={addStudent} 
+                        onAddStudents={addStudents} 
+                        settings={settings}
+                        onUpdateSettings={setSettings}
+                      />
+                    )
                   } 
                 />
                 <Route path="*" element={<Navigate to="/" replace />} />

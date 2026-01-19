@@ -14,6 +14,7 @@ import Department from '../models/Department.js';
 import Course from '../models/Course.js';
 import CourseEnrollment, { EnrollmentStatus } from '../models/CourseEnrollment.js';
 import Student from '../models/Student.js';
+import logger from '../utils/logger.js';
 
 /**
  * Get departments for a faculty
@@ -31,8 +32,8 @@ export const getDepartmentsForFaculty = async (facultyId: string): Promise<mongo
     }).select('_id');
 
     return departments.map(dept => dept._id);
-  } catch (error) {
-    console.error('Error getting departments for faculty:', error);
+  } catch (error: any) {
+    logger.error('Error getting departments for faculty:', { error: error.message, stack: error.stack });
     return [];
   }
 };
@@ -61,8 +62,8 @@ export const getProgramsForFaculty = async (facultyId: string): Promise<string[]
     });
 
     return programs;
-  } catch (error) {
-    console.error('Error getting programs for faculty:', error);
+  } catch (error: any) {
+    logger.error('Error getting programs for faculty:', { error: error.message, stack: error.stack });
     return [];
   }
 };
@@ -90,8 +91,8 @@ export const getProgramsForDepartment = async (departmentId: string): Promise<st
     });
 
     return programs;
-  } catch (error) {
-    console.error('Error getting programs for department:', error);
+  } catch (error: any) {
+    logger.error('Error getting programs for department:', { error: error.message, stack: error.stack });
     return [];
   }
 };
@@ -125,8 +126,8 @@ export const getCoursesForLecturer = async (assignedCourseIds: string[]): Promis
     }).select('_id');
 
     return courses.map(course => course._id);
-  } catch (error) {
-    console.error('Error getting courses for lecturer:', error);
+  } catch (error: any) {
+    logger.error('Error getting courses for lecturer:', { error: error.message, stack: error.stack });
     return [];
   }
 };
@@ -170,8 +171,8 @@ export const isStudentEnrolledInCourse = async (
     });
 
     return !!enrollment;
-  } catch (error) {
-    console.error('Error checking student enrollment:', error);
+  } catch (error: any) {
+    logger.error('Error checking student enrollment:', { error: error.message, stack: error.stack });
     return false;
   }
 };

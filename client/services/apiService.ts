@@ -9,7 +9,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 5000, // 5 second timeout
+  timeout: 50000, // 50 second timeout for database queries
 });
 
 // Add request interceptor to include JWT token
@@ -25,6 +25,42 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Retry utility function with exponential backoff
+const retryRequest = async (
+  requestFn: () => Promise<any>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<any> => {
+  let lastError: any;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await requestFn();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Only retry on 429 (rate limit) or 503 (service unavailable) errors
+      const shouldRetry = error.response?.status === 429 || error.response?.status === 503;
+      
+      if (!shouldRetry || attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Calculate exponential backoff delay: baseDelay * 2^attempt
+      const delay = baseDelay * Math.pow(2, attempt);
+      
+      // Get retry-after header if available (in seconds, convert to ms)
+      const retryAfter = error.response?.headers?.['retry-after'];
+      const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : delay;
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+  }
+  
+  throw lastError;
+};
 
 // Add response interceptor to handle auth errors
 api.interceptors.response.use(
@@ -68,11 +104,11 @@ export const mapStudentFromServer = (serverStudent: any): Student => {
     serverStudent.id ?? serverStudent._id ?? serverStudent.studentNumber;
 
   // Map only allowed fields
+  // Support both 'program' (new) and 'course' (backward compatibility) for course field
   const student: Student = {
     id,
     studentNumber: serverStudent.studentNumber || '',
-    studentRegistrationNumber: serverStudent.studentRegistrationNumber || '',
-    course: serverStudent.course || '',
+    course: serverStudent.course || serverStudent.program || '',
     yearOfStudy: serverStudent.yearOfStudy || 1,
     semesterOfStudy: (serverStudent.semesterOfStudy === '1' || serverStudent.semesterOfStudy === '2') 
       ? serverStudent.semesterOfStudy 
@@ -91,7 +127,6 @@ const mapStudentToServer = (student: Partial<Student>): any => {
   
   // Only include allowed fields
   if (student.studentNumber !== undefined) mapped.studentNumber = student.studentNumber;
-  if (student.studentRegistrationNumber !== undefined) mapped.studentRegistrationNumber = student.studentRegistrationNumber;
   if (student.course !== undefined) mapped.course = student.course;
   if (student.yearOfStudy !== undefined) mapped.yearOfStudy = student.yearOfStudy;
   if (student.semesterOfStudy !== undefined) mapped.semesterOfStudy = student.semesterOfStudy;
@@ -136,6 +171,11 @@ export const getStudents = async (options?: {
     
     const response = await api.get('/students', { params });
     
+    // Validate response exists
+    if (!response.data) {
+      return [];
+    }
+    
     // Backward compatibility: If response is array, return as before
     if (Array.isArray(response.data)) {
       return response.data.map(mapStudentFromServer);
@@ -145,7 +185,7 @@ export const getStudents = async (options?: {
     if (response.data.students && Array.isArray(response.data.students)) {
       return {
         students: response.data.students.map(mapStudentFromServer),
-        pagination: response.data.pagination
+        pagination: response.data.pagination || {}
       };
     }
     
@@ -169,6 +209,12 @@ export const addStudent = async (student: Partial<Student>): Promise<Student> =>
   try {
     const serverStudent = mapStudentToServer(student);
     const response = await api.post('/students', serverStudent);
+    
+    // Validate response
+    if (!response.data) {
+      throw new Error('Invalid response from server');
+    }
+    
     const savedStudent = mapStudentFromServer(response.data);
     
     // Update localStorage cache
@@ -194,8 +240,18 @@ export const addStudent = async (student: Partial<Student>): Promise<Student> =>
 
 export const updateStudent = async (studentNumber: string, student: Partial<Student>): Promise<Student> => {
   try {
+    if (!studentNumber) {
+      throw new Error('Student number is required');
+    }
+    
     const serverStudent = mapStudentToServer(student);
     const response = await api.put(`/students/${studentNumber}`, serverStudent);
+    
+    // Validate response
+    if (!response.data) {
+      throw new Error('Invalid response from server');
+    }
+    
     const updatedStudent = mapStudentFromServer(response.data);
     
     // Update localStorage cache
@@ -226,9 +282,40 @@ export const updateStudent = async (studentNumber: string, student: Partial<Stud
 
 export const deleteStudent = async (studentNumber: string): Promise<void> => {
   try {
-    await api.delete(`/students/${studentNumber}`);
-  } catch (error) {
+    if (!studentNumber) {
+      throw new Error('Student number is required');
+    }
+    
+    // Use retry logic for delete operations to handle rate limiting
+    await retryRequest(
+      () => api.delete(`/students/${studentNumber}`),
+      3, // max 3 retries
+      1000 // base delay of 1 second
+    );
+    
+    // Remove from localStorage cache
+    try {
+      const cached = localStorage.getItem('ku_students_cache');
+      if (cached) {
+        const students = JSON.parse(cached);
+        if (Array.isArray(students)) {
+          const filtered = students.filter(s => s.studentNumber !== studentNumber);
+          localStorage.setItem('ku_students_cache', JSON.stringify(filtered));
+        }
+      }
+    } catch (cacheError) {
+      console.warn('Failed to update cache:', cacheError);
+    }
+  } catch (error: any) {
     console.error('Error deleting student:', error);
+    
+    // Provide user-friendly error messages
+    if (error.response?.status === 429) {
+      const retryAfter = error.response?.headers?.['retry-after'];
+      const waitTime = retryAfter ? `${retryAfter} seconds` : 'a few moments';
+      throw new Error(`Rate limit exceeded. Please wait ${waitTime} and try again.`);
+    }
+    
     throw error;
   }
 };
@@ -247,10 +334,16 @@ export const predictRisk = async (studentData: {
     const response = await api.post('/risk/predict-risk', {
       ...studentData,
     });
+    
+    // Validate response structure
+    if (!response.data || typeof response.data.riskScore !== 'number') {
+      throw new Error('Invalid response from risk prediction endpoint');
+    }
+    
     return {
-      riskScore: response.data.riskScore,
-      riskLevel: normalizeRiskLevel(response.data.riskLevel),
-      riskFactors: response.data.riskFactors,
+      riskScore: response.data.riskScore || 0,
+      riskLevel: normalizeRiskLevel(response.data.riskLevel || 'LOW'),
+      riskFactors: Array.isArray(response.data.riskFactors) ? response.data.riskFactors : [],
     };
   } catch (error) {
     console.error('Error predicting risk:', error);
@@ -280,8 +373,8 @@ export const uploadCsvFile = async (csvContent: string): Promise<{
     rowsSkipped: number;
   };
   details: {
-  created: number;
-  updated: number;
+    created: number;
+    updated: number;
     merged: number;
     skipped: number;
     mergeDetails?: Array<{ row: number; reason: string; matchedBy: string }>;
@@ -289,15 +382,93 @@ export const uploadCsvFile = async (csvContent: string): Promise<{
   errors?: string[];
 }> => {
   try {
+    if (!csvContent || typeof csvContent !== 'string') {
+      throw new Error('CSV content is required and must be a string');
+    }
+    
     const response = await api.post('/students/import/csv', csvContent, {
       headers: {
         'Content-Type': 'text/csv',
       },
       timeout: 60000, // 60 seconds for large files with identity resolution
     });
-    return response.data;
+    
+    // Validate response structure
+    if (!response.data) {
+      throw new Error('Invalid response from server');
+    }
+    
+    return {
+      message: response.data.message || 'CSV import completed',
+      summary: response.data.summary || {
+        totalRows: 0,
+        totalProcessed: 0,
+        studentsCreated: 0,
+        studentsUpdated: 0,
+        duplicatesMerged: 0,
+        rowsSkipped: 0,
+      },
+      details: response.data.details || {
+        created: 0,
+        updated: 0,
+        merged: 0,
+        skipped: 0,
+      },
+      errors: Array.isArray(response.data.errors) ? response.data.errors : [],
+    };
   } catch (error: any) {
     console.error('Error uploading CSV file:', error);
+    throw error;
+  }
+};
+
+/**
+ * Import from server CSV file (server/exports/students.csv)
+ * Reads the CSV file from the server and imports it into the database
+ * Automatically updates the entire client site
+ */
+export const importFromServerCsv = async (): Promise<{
+  message: string;
+  summary: {
+    totalRows: number;
+    totalProcessed: number;
+    studentsCreated: number;
+    studentsUpdated: number;
+    rowsSkipped: number;
+  };
+  details: {
+    created: number;
+    updated: number;
+    skipped: number;
+  };
+  errors?: string[];
+}> => {
+  try {
+    const response = await api.post('/students/import/server-csv');
+    
+    // Validate response structure
+    if (!response.data) {
+      throw new Error('Invalid response from server');
+    }
+    
+    return {
+      message: response.data.message || 'Server CSV import completed',
+      summary: response.data.summary || {
+        totalRows: 0,
+        totalProcessed: 0,
+        studentsCreated: 0,
+        studentsUpdated: 0,
+        rowsSkipped: 0,
+      },
+      details: response.data.details || {
+        created: 0,
+        updated: 0,
+        skipped: 0,
+      },
+      errors: Array.isArray(response.data.errors) ? response.data.errors : [],
+    };
+  } catch (error: any) {
+    console.error('Error importing from server CSV file:', error);
     throw error;
   }
 };
@@ -358,6 +529,12 @@ export const downloadCsvFile = async (): Promise<void> => {
 export const getAnalytics = async (): Promise<any> => {
   try {
     const response = await api.get('/analytics');
+    
+    // Validate response
+    if (!response.data) {
+      throw new Error('Invalid response from analytics endpoint');
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error fetching analytics:', error);
@@ -415,6 +592,11 @@ export const getDataIntegrityAlerts = async (thresholds?: {
     
     const response = await api.get(url);
     
+    // Validate response structure
+    if (!response.data || !response.data.students) {
+      throw new Error('Invalid response structure from server');
+    }
+    
     // Map students from server format to client format, preserving risk labels
     const mapStudentWithLabels = (serverStudent: any): Student & { riskLabels?: string[] } => {
       const student = mapStudentFromServer(serverStudent);
@@ -424,15 +606,39 @@ export const getDataIntegrityAlerts = async (thresholds?: {
       };
     };
     
+    // Safely access nested arrays with fallbacks
+    const studentsData = response.data.students || {};
+    
     return {
-      thresholds: response.data.thresholds,
-      summary: response.data.summary,
+      thresholds: response.data.thresholds || {
+        criticalGpa: 2.0,
+        warningAttendance: 75,
+        financialLimit: 1000000,
+      },
+      summary: response.data.summary || {
+        totalStudents: 0,
+        withFinancialRisk: 0,
+        withAttendanceRisk: 0,
+        withAcademicRisk: 0,
+        incompleteRecords: 0,
+        withNoIssues: 0,
+      },
       students: {
-        financialRisk: response.data.students.financialRisk.map(mapStudentWithLabels),
-        attendanceRisk: response.data.students.attendanceRisk.map(mapStudentWithLabels),
-        academicRisk: response.data.students.academicRisk.map(mapStudentWithLabels),
-        incompleteRecords: response.data.students.incompleteRecords.map(mapStudentWithLabels),
-        noIssues: (response.data.students.noIssues || []).map(mapStudentWithLabels), // 100% accurate from database
+        financialRisk: Array.isArray(studentsData.financialRisk) 
+          ? studentsData.financialRisk.map(mapStudentWithLabels) 
+          : [],
+        attendanceRisk: Array.isArray(studentsData.attendanceRisk) 
+          ? studentsData.attendanceRisk.map(mapStudentWithLabels) 
+          : [],
+        academicRisk: Array.isArray(studentsData.academicRisk) 
+          ? studentsData.academicRisk.map(mapStudentWithLabels) 
+          : [],
+        incompleteRecords: Array.isArray(studentsData.incompleteRecords) 
+          ? studentsData.incompleteRecords.map(mapStudentWithLabels) 
+          : [],
+        noIssues: Array.isArray(studentsData.noIssues) 
+          ? studentsData.noIssues.map(mapStudentWithLabels) 
+          : [],
       },
     };
   } catch (error) {
@@ -441,3 +647,238 @@ export const getDataIntegrityAlerts = async (thresholds?: {
   }
 };
 
+/**
+ * Get all active courses (for attendance selection)
+ * RECEPTIONIST only
+ */
+export const getCourses = async (): Promise<Array<{ _id: string; code: string; name: string; credits: number }>> => {
+  try {
+    const response = await api.get('/attendance/courses');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get enrolled students for a course
+ * RECEPTIONIST only
+ */
+export const getEnrolledStudents = async (
+  courseId: string,
+  options?: { semester?: string; academicYear?: number }
+): Promise<Array<{ id: string; studentId: string; studentName: string }>> => {
+  try {
+    const params: any = {};
+    if (options?.semester) params.semester = options.semester;
+    if (options?.academicYear) params.academicYear = options.academicYear;
+
+    const response = await api.get(`/attendance/courses/${courseId}/students`, { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching enrolled students:', error);
+    throw error;
+  }
+};
+
+/**
+ * Submit attendance records
+ * RECEPTIONIST only
+ */
+export const submitAttendance = async (data: {
+  courseId: string;
+  courseUnit?: string;
+  lectureDate: string;
+  lecturerName: string;
+  attendanceRecords: Array<{ studentId: string; status: 'PRESENT' | 'ABSENT' }>;
+}): Promise<{ message: string; recordsCreated: number; errors?: string[] }> => {
+  try {
+    const response = await api.post('/attendance/submit', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting attendance:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get attendance submissions
+ * RECEPTIONIST only - view own submissions
+ */
+export const getAttendanceSubmissions = async (options?: {
+  courseId?: string;
+  lectureDate?: string;
+}): Promise<Array<{
+  id: string;
+  course: { id: string; code: string; name: string };
+  courseUnit?: string;
+  lectureDate: string;
+  lecturerName: string;
+  student: { id: string; studentId: string };
+  status: 'PRESENT' | 'ABSENT';
+  submittedAt: string;
+  isFinalized: boolean;
+}>> => {
+  try {
+    const params: any = {};
+    if (options?.courseId) params.courseId = options.courseId;
+    if (options?.lectureDate) params.lectureDate = options.lectureDate;
+
+    const response = await api.get('/attendance/submissions', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching attendance submissions:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get comprehensive attendance reports with filters
+ * RECEPTIONIST only
+ */
+export const getAttendanceReports = async (options?: {
+  courseId?: string;
+  studentId?: string;
+  lecturerName?: string;
+  startDate?: string;
+  endDate?: string;
+}): Promise<{
+  summary: {
+    totalRecords: number;
+    presentCount: number;
+    absentCount: number;
+    attendanceRate: number;
+  };
+  courseStats: Array<{
+    course: { id: string; code: string; name: string };
+    total: number;
+    present: number;
+    absent: number;
+    attendanceRate: number;
+  }>;
+  records: Array<{
+    id: string;
+    course: { id: string; code: string; name: string };
+    student: { id: string; studentId: string };
+    lectureDate: string;
+    lecturerName: string;
+    status: 'PRESENT' | 'ABSENT';
+    courseUnit?: string;
+  }>;
+}> => {
+  try {
+    const params: any = {};
+    if (options?.courseId) params.courseId = options.courseId;
+    if (options?.studentId) params.studentId = options.studentId;
+    if (options?.lecturerName) params.lecturerName = options.lecturerName;
+    if (options?.startDate) params.startDate = options.startDate;
+    if (options?.endDate) params.endDate = options.endDate;
+
+    const response = await api.get('/attendance/reports', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching attendance reports:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get attendance statistics by course
+ * RECEPTIONIST only
+ */
+export const getCourseAttendanceSummary = async (options?: {
+  startDate?: string;
+  endDate?: string;
+}): Promise<Array<{
+  course: { id: string; code: string; name: string; credits: number } | null;
+  totalRecords: number;
+  presentCount: number;
+  absentCount: number;
+  uniqueStudentCount: number;
+  uniqueLectureCount: number;
+  attendanceRate: number;
+}>> => {
+  try {
+    const params: any = {};
+    if (options?.startDate) params.startDate = options.startDate;
+    if (options?.endDate) params.endDate = options.endDate;
+
+    const response = await api.get('/attendance/reports/course-summary', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching course attendance summary:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get attendance statistics by student
+ * RECEPTIONIST only
+ */
+export const getStudentAttendanceSummary = async (options?: {
+  courseId?: string;
+  startDate?: string;
+  endDate?: string;
+}): Promise<Array<{
+  student: {
+    id: string;
+    studentId: string;
+    program: string;
+    yearOfStudy: number;
+  } | null;
+  totalRecords: number;
+  presentCount: number;
+  absentCount: number;
+  uniqueCourseCount: number;
+  uniqueLectureCount: number;
+  attendanceRate: number;
+}>> => {
+  try {
+    const params: any = {};
+    if (options?.courseId) params.courseId = options.courseId;
+    if (options?.startDate) params.startDate = options.startDate;
+    if (options?.endDate) params.endDate = options.endDate;
+
+    const response = await api.get('/attendance/reports/student-summary', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching student attendance summary:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get attendance trends over time
+ * RECEPTIONIST only - time-based trend analysis (daily/weekly/monthly)
+ */
+export const getAttendanceTrends = async (options?: {
+  courseId?: string;
+  period?: 'daily' | 'weekly' | 'monthly';
+  startDate?: string;
+  endDate?: string;
+}): Promise<{
+  period: string;
+  trends: Array<{
+    period: any;
+    date: string;
+    totalRecords: number;
+    presentCount: number;
+    absentCount: number;
+    attendanceRate: number;
+  }>;
+}> => {
+  try {
+    const params: any = {};
+    if (options?.courseId) params.courseId = options.courseId;
+    if (options?.period) params.period = options.period;
+    if (options?.startDate) params.startDate = options.startDate;
+    if (options?.endDate) params.endDate = options.endDate;
+
+    const response = await api.get('/attendance/reports/trends', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching attendance trends:', error);
+    throw error;
+  }
+};

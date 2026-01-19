@@ -12,6 +12,7 @@ import studentRoutes from './routes/student.routes.js';
 import riskRoutes from './routes/risk.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
+import attendanceRoutes from './routes/attendance.routes.js';
 
 dotenv.config();
 
@@ -50,13 +51,17 @@ app.use(express.text({ type: 'text/csv', limit: '10mb' })); // Support CSV text 
 // Input sanitization - apply to all routes
 app.use(sanitizeInput);
 
-// Rate limiting - General API (100 requests per 15 minutes per IP)
+// Rate limiting - General API (500 requests per 15 minutes per IP - increased for better UX)
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 500, // Limit each IP to 500 requests per windowMs (increased from 100)
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: (req) => {
+    // Skip rate limiting for DELETE operations (critical operations should not be rate limited)
+    return req.method === 'DELETE';
+  },
 });
 
 // Apply general rate limiting to all API routes
@@ -80,6 +85,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/risk', riskRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 // Serve static files from React app in production (optional - if deploying as single service)
 if (process.env.NODE_ENV === 'production' && process.env.SERVE_STATIC === 'true') {

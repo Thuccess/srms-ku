@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Student, SystemSettings } from '../../types';
 import { useToast } from '../../context/ToastContext';
 import { getDataIntegrityAlerts } from '../../services/apiService';
+import { socketService } from '../../services/socketService';
 import {
   Users,
   FileCheck,
@@ -65,6 +66,21 @@ const RegistryDashboard: React.FC<RegistryDashboardProps> = ({ students, setting
         warningAttendance: settings.thresholds.warningAttendance,
         financialLimit: settings.thresholds.financialLimit,
       });
+      // #region agent log
+      // Debug logging only in development
+      if (import.meta.env.DEV) {
+        console.log('[DEBUG] RegistryDashboard: Received data integrity alerts', {
+          totalStudents: data.summary.totalStudents,
+          withFinancialRisk: data.summary.withFinancialRisk,
+          withAttendanceRisk: data.summary.withAttendanceRisk,
+          withAcademicRisk: data.summary.withAcademicRisk,
+          incompleteRecords: data.summary.incompleteRecords,
+          withNoIssues: data.summary.withNoIssues,
+          noIssuesListLength: data.students.noIssues?.length || 0,
+          thresholds: data.thresholds,
+          settingsThresholds: settings.thresholds
+        });
+      }
       setDataIntegrityData(data);
     } catch (error: any) {
       console.error('Error fetching data integrity alerts:', error);
@@ -96,6 +112,21 @@ const RegistryDashboard: React.FC<RegistryDashboardProps> = ({ students, setting
   useEffect(() => {
     fetchDataIntegrityAlerts();
   }, [fetchDataIntegrityAlerts]);
+
+  // Listen for student import events to refresh data
+  useEffect(() => {
+    const handleStudentsImported = async () => {
+      // Refresh data integrity alerts when students are imported
+      await fetchDataIntegrityAlerts();
+      addToast('Registry Dashboard updated with latest student data', 'info');
+    };
+
+    socketService.onStudentsImported(handleStudentsImported);
+
+    return () => {
+      socketService.offStudentsImported(handleStudentsImported);
+    };
+  }, [fetchDataIntegrityAlerts, addToast]);
 
   // Manual refresh handler (shows success toast)
   const handleRefreshAlerts = useCallback(async () => {
@@ -204,7 +235,6 @@ const RegistryDashboard: React.FC<RegistryDashboardProps> = ({ students, setting
       // Only allowed fields in exact order
       const headers = [
         'Student Number',
-        'Student Registration Number',
         'Course',
         'Year of Study',
         'Semester of Study',
@@ -217,7 +247,6 @@ const RegistryDashboard: React.FC<RegistryDashboardProps> = ({ students, setting
       const rows = studentList.map((student) => {
         return [
           escapeCsvField(student.studentNumber || ''),
-          escapeCsvField(student.studentRegistrationNumber || ''),
           escapeCsvField(student.course || ''),
           escapeCsvField(student.yearOfStudy || ''),
           escapeCsvField(student.semesterOfStudy || ''),
@@ -329,7 +358,13 @@ const RegistryDashboard: React.FC<RegistryDashboardProps> = ({ students, setting
           {/* Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
             {/* Total Students */}
-            <div className="group relative bg-gradient-to-br from-white via-indigo-50/30 to-white p-6 rounded-2xl shadow-lg border-2 border-indigo-100/50 hover:border-indigo-200 hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <button
+              onClick={() => {
+                navigate('/students');
+              }}
+              className="group relative bg-gradient-to-br from-white via-indigo-50/30 to-white p-6 rounded-2xl shadow-lg border-2 border-indigo-100/50 hover:border-indigo-200 hover:shadow-xl transition-all duration-300 overflow-hidden text-left cursor-pointer w-full"
+              title="View all students"
+            >
               <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-100/20 rounded-full -mr-12 -mt-12 blur-2xl"></div>
               <div className="relative flex items-center justify-between">
                 <div className="flex-1">
@@ -342,10 +377,16 @@ const RegistryDashboard: React.FC<RegistryDashboardProps> = ({ students, setting
                   <Users size={24} className="text-white" strokeWidth={2} />
                 </div>
               </div>
-            </div>
+            </button>
 
             {/* Financial Risk */}
-            <div className="group relative bg-gradient-to-br from-white via-amber-50/30 to-white p-6 rounded-2xl shadow-lg border-2 border-amber-100/50 hover:border-amber-200 hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <button
+              onClick={() => {
+                navigate('/students?issue=all-financial');
+              }}
+              className="group relative bg-gradient-to-br from-white via-amber-50/30 to-white p-6 rounded-2xl shadow-lg border-2 border-amber-100/50 hover:border-amber-200 hover:shadow-xl transition-all duration-300 overflow-hidden text-left cursor-pointer w-full"
+              title="View students with financial risk"
+            >
               <div className="absolute top-0 right-0 w-24 h-24 bg-amber-100/20 rounded-full -mr-12 -mt-12 blur-2xl"></div>
               <div className="relative flex items-center justify-between">
                 <div className="flex-1">
@@ -360,10 +401,16 @@ const RegistryDashboard: React.FC<RegistryDashboardProps> = ({ students, setting
                   <DollarSign size={24} className="text-white" strokeWidth={2} />
                 </div>
               </div>
-            </div>
+            </button>
 
             {/* Attendance Risk */}
-            <div className="group relative bg-gradient-to-br from-white via-orange-50/30 to-white p-6 rounded-2xl shadow-lg border-2 border-orange-100/50 hover:border-orange-200 hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <button
+              onClick={() => {
+                navigate('/students?issue=all-attendance');
+              }}
+              className="group relative bg-gradient-to-br from-white via-orange-50/30 to-white p-6 rounded-2xl shadow-lg border-2 border-orange-100/50 hover:border-orange-200 hover:shadow-xl transition-all duration-300 overflow-hidden text-left cursor-pointer w-full"
+              title="View students with attendance risk"
+            >
               <div className="absolute top-0 right-0 w-24 h-24 bg-orange-100/20 rounded-full -mr-12 -mt-12 blur-2xl"></div>
               <div className="relative flex items-center justify-between">
                 <div className="flex-1">
@@ -378,10 +425,16 @@ const RegistryDashboard: React.FC<RegistryDashboardProps> = ({ students, setting
                   <TrendingDown size={24} className="text-white" strokeWidth={2} />
                 </div>
               </div>
-            </div>
+            </button>
 
             {/* Academic Risk */}
-            <div className="group relative bg-gradient-to-br from-white via-purple-50/30 to-white p-6 rounded-2xl shadow-lg border-2 border-purple-100/50 hover:border-purple-200 hover:shadow-xl transition-all duration-300 overflow-hidden">
+            <button
+              onClick={() => {
+                navigate('/students?issue=gpa');
+              }}
+              className="group relative bg-gradient-to-br from-white via-purple-50/30 to-white p-6 rounded-2xl shadow-lg border-2 border-purple-100/50 hover:border-purple-200 hover:shadow-xl transition-all duration-300 overflow-hidden text-left cursor-pointer w-full"
+              title="View students with academic risk"
+            >
               <div className="absolute top-0 right-0 w-24 h-24 bg-purple-100/20 rounded-full -mr-12 -mt-12 blur-2xl"></div>
               <div className="relative flex items-center justify-between">
                 <div className="flex-1">
@@ -396,7 +449,7 @@ const RegistryDashboard: React.FC<RegistryDashboardProps> = ({ students, setting
                   <GraduationCap size={24} className="text-white" strokeWidth={2} />
                 </div>
               </div>
-            </div>
+            </button>
 
             {/* No Issues */}
             <button

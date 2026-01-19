@@ -2,12 +2,7 @@
  * Risk Scoring Service
  * 
  * This service calculates student risk scores using rules-based logic.
- * Risk scoring is deterministic and does NOT use AI.
- * 
- * AI is only used for:
- * - Explaining risk scores in human language
- * - Generating intervention recommendations
- * - Summarizing risk factors
+ * Risk scoring is deterministic and does not use AI.
  */
 
 export interface RiskScoreInput {

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Student, RiskLevel, SystemSettings } from '../types';
-import { UserPlus, Save, CheckCircle, Upload, FileText, Loader2, CloudUpload, ArrowRight, Settings as SettingsIcon, ShieldAlert, Bell, Database, Mail, Smartphone, DollarSign } from 'lucide-react';
+import { UserPlus, Save, CheckCircle, Upload, FileText, Loader2, CloudUpload, ArrowRight, Settings as SettingsIcon, ShieldAlert, Bell, Database, Mail, Smartphone, DollarSign, RefreshCw, Server } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
 interface SettingsProps {
@@ -41,6 +41,7 @@ const Settings: React.FC<SettingsProps> = ({ onAddStudent, onAddStudents, settin
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadCount, setUploadCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isImportingFromServer, setIsImportingFromServer] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Official Kampala University Programs (as per university catalog)
@@ -164,13 +165,11 @@ const Settings: React.FC<SettingsProps> = ({ onAddStudent, onAddStudents, settin
     setSuccess(false);
 
     const studentNumber = studentIdTrimmed.toUpperCase();
-    const studentRegistrationNumber = `REG-${studentNumber}`;
     
     const newStudent: Student = {
       id: Date.now().toString(),
       // Only allowed fields
       studentNumber,
-      studentRegistrationNumber,
       course: formData.program.trim(),
       yearOfStudy: parseInt(formData.year) || 1,
       semesterOfStudy: (formData.semester === '1' || formData.semester === '2') ? formData.semester as '1' | '2' : '1',
@@ -225,9 +224,115 @@ const Settings: React.FC<SettingsProps> = ({ onAddStudent, onAddStudents, settin
     setUploadSuccess(false);
 
     if (isPdf) {
-      setIsUploading(false);
-      addToast('PDF extraction is not available. Please use CSV format for bulk imports.', 'error');
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      // Validate file size (10MB limit)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        setIsUploading(false);
+        addToast('PDF file size exceeds 10MB limit. Please upload a smaller file.', 'error');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+      
+      try {
+        addToast('Scanning PDF document and extracting student data...', 'info');
+        
+        // Import PDF parser
+        const { processPdfFile } = await import('../services/pdfParser');
+        
+        // Process PDF and extract student data
+        const csvContent = await processPdfFile(file);
+        
+        if (!csvContent || csvContent.trim().length === 0) {
+          throw new Error('No student data could be extracted from the PDF');
+        }
+        
+        addToast('PDF processed successfully. Uploading extracted data...', 'success');
+        
+        // Import uploadCsvFile function
+        const { uploadCsvFile } = await import('../services/apiService');
+        
+        // Upload extracted CSV data to server
+        const result = await uploadCsvFile(csvContent);
+        
+        // Handle response (same as CSV upload)
+        const summary = result.summary || {
+          totalRows: (result as any).total || 0,
+          totalProcessed: (result as any).total || 0,
+          studentsCreated: (result as any).created || (result as any).inserted || 0,
+          studentsUpdated: (result as any).updated || 0,
+          duplicatesMerged: result.details?.merged || 0,
+          rowsSkipped: (result as any).skipped || 0,
+        };
+        
+        setUploadCount(summary.totalProcessed);
+        setIsUploading(false);
+        setUploadSuccess(true);
+        
+        // Fetch updated students from server and save to localStorage
+        try {
+          const { getStudents } = await import('../services/apiService');
+          const updatedStudents = await getStudents();
+          if ((updatedStudents as any).length > 0) {
+            // Save to localStorage as cache (used as fallback)
+            localStorage.setItem('ku_students_cache', JSON.stringify(updatedStudents));
+            localStorage.setItem('ku_students_cache_timestamp', new Date().toISOString());
+            console.log(`✅ Saved ${(updatedStudents as any[]).length} students to localStorage cache`);
+          }
+        } catch (fetchError) {
+          console.warn('Failed to fetch updated students after PDF import:', fetchError);
+          // Continue anyway - server CSV is already updated
+        }
+        
+        // Build comprehensive message
+        let message = `PDF Import Complete: ${summary.totalProcessed} of ${summary.totalRows} students processed`;
+        const parts: string[] = [];
+        if (summary.studentsCreated > 0) {
+          parts.push(`${summary.studentsCreated} new student${summary.studentsCreated !== 1 ? 's' : ''}`);
+        }
+        if (summary.studentsUpdated > 0) {
+          parts.push(`${summary.studentsUpdated} updated`);
+        }
+        if (summary.duplicatesMerged > 0) {
+          parts.push(`${summary.duplicatesMerged} duplicate${summary.duplicatesMerged !== 1 ? 's' : ''} merged`);
+        }
+        if (summary.rowsSkipped > 0) {
+          parts.push(`${summary.rowsSkipped} skipped`);
+        }
+        
+        if (parts.length > 0) {
+          message += ` (${parts.join(', ')})`;
+        }
+        message += '. Student Directory and Registry Dashboard updated.';
+        
+        addToast(message, 'success');
+        
+        // Show detailed merge information if available
+        if (result.details?.mergeDetails && result.details.mergeDetails.length > 0) {
+          console.log('Duplicate merge details:', result.details.mergeDetails);
+          if (result.details.mergeDetails.length <= 5) {
+            addToast(`${result.details.mergeDetails.length} duplicate row(s) were merged into existing profiles`, 'info');
+          } else {
+            addToast(`${result.details.mergeDetails.length} duplicate rows were merged. Check console for details.`, 'info');
+          }
+        }
+        
+        if (result.errors && result.errors.length > 0) {
+          console.warn('PDF import had some errors:', result.errors);
+          addToast(`${result.errors.length} row(s) had errors. Check console for details.`, 'warning');
+        }
+        
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        setTimeout(() => setUploadSuccess(false), 5000);
+        
+        // Note: Student Directory and Registry Dashboard will automatically refresh via socket.io 'students:imported' event
+        // No need to reload the page - the App.tsx socket handler will update the student list
+      } catch (err: any) {
+        console.error('PDF processing error', err);
+        setIsUploading(false);
+        const errorMessage = err?.message || 'Failed to process PDF file. Please ensure the PDF contains a readable class list.';
+        addToast(errorMessage, 'error');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
       return;
     }
 
@@ -331,6 +436,87 @@ const Settings: React.FC<SettingsProps> = ({ onAddStudent, onAddStudents, settin
     }
   };
 
+  // Import from server CSV file (server/exports/students.csv)
+  const handleImportFromServerCsv = async () => {
+    setIsImportingFromServer(true);
+    try {
+      addToast('Importing from server CSV file...', 'info');
+      
+      // Import the function
+      const { importFromServerCsv } = await import('../services/apiService');
+      
+      // Import from server CSV
+      const result = await importFromServerCsv();
+      
+      // Handle response
+      const summary = result.summary || {
+        totalRows: 0,
+        totalProcessed: 0,
+        studentsCreated: 0,
+        studentsUpdated: 0,
+        rowsSkipped: 0,
+      };
+      
+      // Build comprehensive message
+      let message = `Server CSV Import Complete: ${summary.totalProcessed} of ${summary.totalRows} rows processed`;
+      const parts: string[] = [];
+      if (summary.studentsCreated > 0) {
+        parts.push(`${summary.studentsCreated} new student${summary.studentsCreated !== 1 ? 's' : ''}`);
+      }
+      if (summary.studentsUpdated > 0) {
+        parts.push(`${summary.studentsUpdated} updated`);
+      }
+      if (summary.rowsSkipped > 0) {
+        parts.push(`${summary.rowsSkipped} skipped`);
+      }
+      
+      if (parts.length > 0) {
+        message += ` (${parts.join(', ')})`;
+      }
+      message += '. Database and client updated.';
+      
+      addToast(message, 'success');
+      
+      // Fetch updated students from server and update client
+      try {
+        const { getStudents } = await import('../services/apiService');
+        const updatedStudents = await getStudents();
+        const studentsArray = Array.isArray(updatedStudents) 
+          ? updatedStudents 
+          : (updatedStudents as any).students || [];
+        
+        if (studentsArray.length > 0) {
+          // Update parent component's students list
+          onAddStudents(studentsArray);
+          
+          // Save to localStorage as cache
+          localStorage.setItem('ku_students_cache', JSON.stringify(studentsArray));
+          localStorage.setItem('ku_students_cache_timestamp', new Date().toISOString());
+          
+          addToast(`Client updated: ${studentsArray.length} student${studentsArray.length !== 1 ? 's' : ''} loaded`, 'success');
+        }
+      } catch (fetchError) {
+        console.warn('Failed to fetch updated students after server CSV import:', fetchError);
+        addToast('Import completed, but failed to refresh client. Please refresh the page.', 'warning');
+      }
+      
+      if (result.errors && result.errors.length > 0) {
+        console.warn('Server CSV import had some errors:', result.errors);
+        if (result.errors.length <= 5) {
+          result.errors.forEach(err => addToast(err, 'warning'));
+        } else {
+          addToast(`${result.errors.length} row(s) had errors. Check console for details.`, 'warning');
+        }
+      }
+    } catch (err: any) {
+      console.error('Server CSV import error', err);
+      const errorMessage = err?.response?.data?.error || err?.message || 'Failed to import from server CSV file';
+      addToast(errorMessage, 'error');
+    } finally {
+      setIsImportingFromServer(false);
+    }
+  };
+
   const handleSaveSettings = () => {
     onUpdateSettings({
       thresholds: localThresholds,
@@ -376,6 +562,56 @@ const Settings: React.FC<SettingsProps> = ({ onAddStudent, onAddStudents, settin
         {/* -- ENROLLMENT TAB -- */}
         {activeTab === 'enrollment' && (
           <div className="animate-fade-in space-y-10">
+            {/* Import from Server CSV */}
+            <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-[2.5rem] shadow-2xl overflow-hidden text-white relative border border-emerald-500/50 group">
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white opacity-5 rounded-full -mr-40 -mt-40 pointer-events-none blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-400 opacity-20 rounded-full -ml-20 -mb-20 pointer-events-none blur-3xl"></div>
+                
+                <div className="p-10 relative z-10 flex flex-col md:flex-row gap-10 items-center">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-white/10 rounded-xl backdrop-blur-sm border border-white/10">
+                        <Server size={24} className="text-emerald-200" />
+                      </div>
+                      <h3 className="text-2xl font-bold tracking-tight">Import from Server CSV</h3>
+                    </div>
+                    <p className="text-emerald-100 text-lg leading-relaxed max-w-xl">
+                      Import students directly from <code className="bg-white/20 px-2 py-1 rounded text-sm font-mono">server/exports/students.csv</code>. This will update the entire database and refresh the client site automatically.
+                    </p>
+                    <div className="mt-8 flex items-center gap-4 text-sm font-medium text-emerald-200 bg-black/20 p-4 rounded-xl border border-white/5 w-fit">
+                      <Database size={20} />
+                      <span>Updates database and client instantly</span>
+                    </div>
+                  </div>
+
+                  <div className="w-full md:w-[400px]">
+                    <button
+                      onClick={handleImportFromServerCsv}
+                      disabled={isImportingFromServer}
+                      className="w-full h-64 bg-white/10 hover:bg-white/20 rounded-3xl flex flex-col items-center justify-center gap-4 cursor-pointer transition-all duration-300 shadow-xl hover:shadow-2xl border-4 border-transparent hover:border-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-md"
+                    >
+                      {isImportingFromServer ? (
+                        <>
+                          <Loader2 size={48} className="animate-spin text-white" />
+                          <p className="font-bold text-xl">Importing...</p>
+                          <p className="text-emerald-100 text-sm">Updating database and client</p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <RefreshCw size={32} className="text-emerald-600" />
+                          </div>
+                          <div className="text-center">
+                            <span className="font-bold text-lg block text-white">Import from Server CSV</span>
+                            <span className="text-emerald-100 text-sm">Click to import from server/exports/students.csv</span>
+                          </div>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+            </div>
+
             {/* PDF Upload */}
             <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[2.5rem] shadow-2xl overflow-hidden text-white relative border border-indigo-500/50 group">
                 <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white opacity-5 rounded-full -mr-40 -mt-40 pointer-events-none blur-3xl"></div>
@@ -390,7 +626,7 @@ const Settings: React.FC<SettingsProps> = ({ onAddStudent, onAddStudents, settin
                       <h3 className="text-2xl font-bold tracking-tight">Bulk Import via PDF</h3>
                     </div>
                     <p className="text-indigo-100 text-lg leading-relaxed max-w-xl">
-                      Upload class lists. Our Gemini AI agent will scan the document, structure the data, and populate the dashboard instantly.
+                      Upload class lists. The system will scan the document, structure the data, and populate the dashboard instantly.
                     </p>
                     <div className="mt-8 flex items-center gap-4 text-sm font-medium text-indigo-200 bg-black/20 p-4 rounded-xl border border-white/5 w-fit">
                       <CloudUpload size={20} />
@@ -402,7 +638,7 @@ const Settings: React.FC<SettingsProps> = ({ onAddStudent, onAddStudents, settin
                     {isUploading ? (
                       <div className="bg-white/10 rounded-3xl p-10 flex flex-col items-center justify-center text-center backdrop-blur-md border border-white/20 h-64">
                         <Loader2 size={48} className="animate-spin mb-6 text-white" />
-                        <p className="font-bold text-xl">AI Agent Working...</p>
+                        <p className="font-bold text-xl">Processing...</p>
                       </div>
                     ) : uploadSuccess ? (
                       <div className="bg-emerald-500/20 rounded-3xl p-10 flex flex-col items-center justify-center text-center backdrop-blur-md border border-emerald-500/30 h-64 animate-in fade-in zoom-in">
@@ -624,7 +860,7 @@ const Settings: React.FC<SettingsProps> = ({ onAddStudent, onAddStudents, settin
                     <ShieldAlert className="text-amber-600 flex-shrink-0" size={24} />
                     <div>
                        <h4 className="font-bold text-amber-900 text-lg">Global Alert Sensitivity</h4>
-                       <p className="text-amber-700/80 leading-relaxed mt-1">Adjusting these values will influence how the AI classifies "High Risk" students across all departments. Changes take effect immediately on the next analysis cycle.</p>
+                       <p className="text-amber-700/80 leading-relaxed mt-1">Adjusting these values will influence how the system classifies "High Risk" students across all departments. Changes take effect immediately on the next analysis cycle.</p>
                     </div>
                  </div>
 

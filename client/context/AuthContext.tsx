@@ -71,8 +71,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Remove trailing slash if present
       const cleanUrl = loginUrl.replace(/\/$/, '');
       
-      console.log('Attempting login to:', loginUrl);
-      console.log('Email:', email);
+      // Debug logging only in development
+      if (import.meta.env.DEV) {
+        console.log('Attempting login to:', cleanUrl);
+      }
       
       const response = await fetch(cleanUrl, {
         method: 'POST',
@@ -82,7 +84,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
 
-      console.log('Login response status:', response.status);
+      // Debug logging only in development
+      if (import.meta.env.DEV) {
+        console.log('Login response status:', response.status);
+      }
 
       if (!response.ok) {
         let errorData;
@@ -93,16 +98,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         
         const errorMessage = errorData.error || errorData.details || `Login failed (${response.status})`;
+        // Always log errors
         console.error('Login API error:', {
           status: response.status,
           statusText: response.statusText,
-          error: errorData,
         });
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      console.log('Login successful, user:', data.user?.email);
+      // Debug logging only in development
+      if (import.meta.env.DEV) {
+        console.log('Login successful, user:', data.user?.email);
+      }
       
       // Store token and user
       setToken(data.token);
@@ -162,6 +170,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       UserRole.VC,
       UserRole.DVC_ACADEMIC,
       UserRole.IT_ADMIN,
+      UserRole.RECEPTIONIST,
     ].includes(user.role);
   };
 

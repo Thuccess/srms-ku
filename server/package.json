@@ -13,6 +13,8 @@
     "seed-courses": "tsx scripts/seedCourses.ts",
     "seed-all": "tsx scripts/seedFaculties.ts && tsx scripts/seedDepartments.ts && tsx scripts/seedCourses.ts",
     "fix-users": "tsx scripts/fixUsers.ts",
+    "fix-receptionist": "tsx scripts/fixReceptionistUser.ts",
+    "diagnose-receptionist": "tsx scripts/diagnoseReceptionistLogin.ts",
     "test-login": "tsx scripts/testLogin.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,7 +23,6 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@sentry/node": "^10.32.1",
     "@types/bcryptjs": "^2.4.6",
     "axios": "^1.13.2",
@@ -35,6 +36,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.2",
+    "pdfjs-dist": "^4.10.38",
     "socket.io": "^4.8.1",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0"

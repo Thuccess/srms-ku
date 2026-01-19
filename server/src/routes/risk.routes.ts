@@ -9,6 +9,7 @@ import { canViewRiskScores, canViewStudent } from '../middleware/rbac.middleware
 import { calculateRiskScore } from '../services/riskScoring.service.js';
 import SystemSettings, { getSystemSettings } from '../models/SystemSettings.js';
 import { riskPredictionLimiter } from '../middleware/rateLimiter.middleware.js';
+import logger from '../utils/logger.js';
 
 const router = Router();
 
@@ -81,7 +82,9 @@ router.post('/predict-risk', riskPredictionLimiter, async (req: AuthRequest, res
       financialStatus: studentBalance > 0 ? 'ARREARS' : 'CLEAR', // Infer from balance
     });
 
-    console.log(`📊 Calculated risk score: ${riskResult.riskScore}/100 (${riskResult.riskLevel})`);
+    logger.info(`Calculated risk score: ${riskResult.riskScore}/100 (${riskResult.riskLevel})`, {
+      studentNumber: student.studentNumber,
+    });
 
     // Emit real-time event
     emitToAll('risk:updated', {
@@ -98,7 +101,7 @@ router.post('/predict-risk', riskPredictionLimiter, async (req: AuthRequest, res
       riskFactors: riskResult.riskFactors,
     });
   } catch (error: any) {
-    console.error('❌ Risk prediction error:', error);
+    logger.error('Risk prediction error:', { error: error.message, stack: error.stack });
     return res.status(500).json({
       error: 'Failed to calculate risk score.',
       details: error.message,

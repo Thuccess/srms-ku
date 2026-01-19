@@ -6,7 +6,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '1',
     studentNumber: 'KU0004262023',
-    studentRegistrationNumber: 'BCSIT/03/001D/FEB/2021',
     course: 'Computer Science & Information Technology',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -17,7 +16,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '2',
     studentNumber: 'KU0005123456',
-    studentRegistrationNumber: 'BEC/02/001D/AUG/2022',
     course: 'Economics',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -28,7 +26,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '3',
     studentNumber: 'KU0006234567',
-    studentRegistrationNumber: 'BSOGM/04/001D/FEB/2020',
     course: 'Science in Oil & Gas Management',
     yearOfStudy: 4,
     semesterOfStudy: '1',
@@ -39,7 +36,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '4',
     studentNumber: 'KU0007345678',
-    studentRegistrationNumber: 'BPA/01/001D/AUG/2024',
     course: 'Public Administration',
     yearOfStudy: 1,
     semesterOfStudy: '2',
@@ -50,7 +46,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '5',
     studentNumber: 'KU0008456789',
-    studentRegistrationNumber: 'BBA/03/001D/FEB/2021',
     course: 'Business Administration',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -61,7 +56,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '6',
     studentNumber: 'KU0009567890',
-    studentRegistrationNumber: 'BAED/01/001D/AUG/2025',
     course: 'Arts with Education',
     yearOfStudy: 1,
     semesterOfStudy: '1',
@@ -72,7 +66,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '7',
     studentNumber: 'KU0010678901',
-    studentRegistrationNumber: 'LLB/02/001D/FEB/2022',
     course: 'Law',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -83,7 +76,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '8',
     studentNumber: 'KU0011789012',
-    studentRegistrationNumber: 'BENG/04/001D/AUG/2020',
     course: 'Engineering',
     yearOfStudy: 4,
     semesterOfStudy: '1',
@@ -94,7 +86,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '9',
     studentNumber: 'KU0012890123',
-    studentRegistrationNumber: 'MBCHB/01/001D/FEB/2024',
     course: 'Medicine',
     yearOfStudy: 1,
     semesterOfStudy: '2',
@@ -105,7 +96,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '10',
     studentNumber: 'KU0013901234',
-    studentRegistrationNumber: 'BACC/02/001D/AUG/2022',
     course: 'Accounting',
     yearOfStudy: 2,
     semesterOfStudy: '1',
@@ -116,7 +106,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '11',
     studentNumber: 'KU0014012345',
-    studentRegistrationNumber: 'BCSIT/04/002D/FEB/2020',
     course: 'Computer Science & Information Technology',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -127,7 +116,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '12',
     studentNumber: 'KU0015123456',
-    studentRegistrationNumber: 'BEC/03/002D/AUG/2021',
     course: 'Economics',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -138,7 +126,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '13',
     studentNumber: 'KU0016234567',
-    studentRegistrationNumber: 'BSOGM/01/002D/FEB/2025',
     course: 'Science in Oil & Gas Management',
     yearOfStudy: 1,
     semesterOfStudy: '2',
@@ -149,7 +136,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '14',
     studentNumber: 'KU0017345678',
-    studentRegistrationNumber: 'BPA/02/002D/AUG/2023',
     course: 'Public Administration',
     yearOfStudy: 2,
     semesterOfStudy: '1',
@@ -160,7 +146,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '15',
     studentNumber: 'KU0018456789',
-    studentRegistrationNumber: 'BBA/01/002D/FEB/2024',
     course: 'Business Administration',
     yearOfStudy: 1,
     semesterOfStudy: '2',
@@ -171,7 +156,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '16',
     studentNumber: 'KU0019567890',
-    studentRegistrationNumber: 'BAED/03/002D/AUG/2021',
     course: 'Arts with Education',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -182,7 +166,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '17',
     studentNumber: 'KU0020678901',
-    studentRegistrationNumber: 'LLB/04/002D/FEB/2020',
     course: 'Law',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -193,7 +176,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '18',
     studentNumber: 'KU0021789012',
-    studentRegistrationNumber: 'BENG/02/002D/AUG/2022',
     course: 'Engineering',
     yearOfStudy: 2,
     semesterOfStudy: '1',
@@ -204,7 +186,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '19',
     studentNumber: 'KU0022890123',
-    studentRegistrationNumber: 'MBCHB/03/002D/FEB/2021',
     course: 'Medicine',
     yearOfStudy: 3,
     semesterOfStudy: '2',
@@ -215,7 +196,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '20',
     studentNumber: 'KU0023901234',
-    studentRegistrationNumber: 'BACC/04/002D/AUG/2020',
     course: 'Accounting',
     yearOfStudy: 4,
     semesterOfStudy: '1',
@@ -226,7 +206,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '21',
     studentNumber: 'KU0024012345',
-    studentRegistrationNumber: 'BCSIT/01/003D/FEB/2025',
     course: 'Computer Science & Information Technology',
     yearOfStudy: 1,
     semesterOfStudy: '1',
@@ -237,7 +216,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '22',
     studentNumber: 'KU0025123456',
-    studentRegistrationNumber: 'BEC/04/003D/AUG/2020',
     course: 'Economics',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -248,7 +226,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '23',
     studentNumber: 'KU0026234567',
-    studentRegistrationNumber: 'BSOGM/02/003D/FEB/2023',
     course: 'Science in Oil & Gas Management',
     yearOfStudy: 2,
     semesterOfStudy: '1',
@@ -259,7 +236,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '24',
     studentNumber: 'KU0027345678',
-    studentRegistrationNumber: 'BPA/03/003D/AUG/2022',
     course: 'Public Administration',
     yearOfStudy: 3,
     semesterOfStudy: '2',
@@ -270,7 +246,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '25',
     studentNumber: 'KU0028456789',
-    studentRegistrationNumber: 'BBA/04/003D/FEB/2020',
     course: 'Business Administration',
     yearOfStudy: 4,
     semesterOfStudy: '1',
@@ -281,7 +256,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '26',
     studentNumber: 'KU0029567890',
-    studentRegistrationNumber: 'BAED/02/003D/AUG/2023',
     course: 'Arts with Education',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -292,7 +266,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '27',
     studentNumber: 'KU0030678901',
-    studentRegistrationNumber: 'LLB/01/003D/FEB/2024',
     course: 'Law',
     yearOfStudy: 1,
     semesterOfStudy: '1',
@@ -303,7 +276,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '28',
     studentNumber: 'KU0031789012',
-    studentRegistrationNumber: 'BENG/03/003D/AUG/2021',
     course: 'Engineering',
     yearOfStudy: 3,
     semesterOfStudy: '2',
@@ -314,7 +286,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '29',
     studentNumber: 'KU0032890123',
-    studentRegistrationNumber: 'MBCHB/04/003D/FEB/2020',
     course: 'Medicine',
     yearOfStudy: 4,
     semesterOfStudy: '1',
@@ -325,7 +296,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '30',
     studentNumber: 'KU0033901234',
-    studentRegistrationNumber: 'BACC/01/003D/AUG/2025',
     course: 'Accounting',
     yearOfStudy: 1,
     semesterOfStudy: '2',
@@ -336,7 +306,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '31',
     studentNumber: 'KU0034012345',
-    studentRegistrationNumber: 'BCSIT/02/004D/FEB/2023',
     course: 'Computer Science & Information Technology',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -347,7 +316,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '32',
     studentNumber: 'KU0035123456',
-    studentRegistrationNumber: 'BEC/01/004D/AUG/2024',
     course: 'Economics',
     yearOfStudy: 1,
     semesterOfStudy: '1',
@@ -358,7 +326,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '33',
     studentNumber: 'KU0036234567',
-    studentRegistrationNumber: 'BSOGM/03/004D/FEB/2022',
     course: 'Science in Oil & Gas Management',
     yearOfStudy: 3,
     semesterOfStudy: '2',
@@ -369,7 +336,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '34',
     studentNumber: 'KU0037345678',
-    studentRegistrationNumber: 'BPA/04/004D/AUG/2020',
     course: 'Public Administration',
     yearOfStudy: 4,
     semesterOfStudy: '1',
@@ -380,7 +346,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '35',
     studentNumber: 'KU0038456789',
-    studentRegistrationNumber: 'BBA/02/004D/FEB/2022',
     course: 'Business Administration',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -391,7 +356,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '36',
     studentNumber: 'KU0039567890',
-    studentRegistrationNumber: 'BAED/04/004D/AUG/2020',
     course: 'Arts with Education',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -402,7 +366,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '37',
     studentNumber: 'KU0040678901',
-    studentRegistrationNumber: 'LLB/03/004D/FEB/2021',
     course: 'Law',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -413,7 +376,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '38',
     studentNumber: 'KU0041789012',
-    studentRegistrationNumber: 'BENG/01/004D/AUG/2024',
     course: 'Engineering',
     yearOfStudy: 1,
     semesterOfStudy: '2',
@@ -424,7 +386,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '39',
     studentNumber: 'KU0042890123',
-    studentRegistrationNumber: 'MBCHB/02/004D/FEB/2023',
     course: 'Medicine',
     yearOfStudy: 2,
     semesterOfStudy: '1',
@@ -435,7 +396,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '40',
     studentNumber: 'KU0043901234',
-    studentRegistrationNumber: 'BACC/03/004D/AUG/2021',
     course: 'Accounting',
     yearOfStudy: 3,
     semesterOfStudy: '2',
@@ -446,7 +406,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '41',
     studentNumber: 'KU0044012345',
-    studentRegistrationNumber: 'BCSIT/04/005D/FEB/2020',
     course: 'Computer Science & Information Technology',
     yearOfStudy: 4,
     semesterOfStudy: '1',
@@ -457,7 +416,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '42',
     studentNumber: 'KU0045123456',
-    studentRegistrationNumber: 'BEC/02/005D/AUG/2022',
     course: 'Economics',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -468,7 +426,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '43',
     studentNumber: 'KU0046234567',
-    studentRegistrationNumber: 'BSOGM/01/005D/FEB/2025',
     course: 'Science in Oil & Gas Management',
     yearOfStudy: 1,
     semesterOfStudy: '1',
@@ -479,7 +436,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '44',
     studentNumber: 'KU0047345678',
-    studentRegistrationNumber: 'BPA/03/005D/AUG/2022',
     course: 'Public Administration',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -490,7 +446,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '45',
     studentNumber: 'KU0048456789',
-    studentRegistrationNumber: 'BBA/04/005D/FEB/2020',
     course: 'Business Administration',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -501,7 +456,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '46',
     studentNumber: 'KU0049567890',
-    studentRegistrationNumber: 'BAED/01/005D/AUG/2025',
     course: 'Arts with Education',
     yearOfStudy: 1,
     semesterOfStudy: '2',
@@ -512,7 +466,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '47',
     studentNumber: 'KU0050678901',
-    studentRegistrationNumber: 'LLB/02/005D/FEB/2023',
     course: 'Law',
     yearOfStudy: 2,
     semesterOfStudy: '1',
@@ -523,7 +476,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '48',
     studentNumber: 'KU0051789012',
-    studentRegistrationNumber: 'BENG/04/005D/AUG/2020',
     course: 'Engineering',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -534,7 +486,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '49',
     studentNumber: 'KU0052890123',
-    studentRegistrationNumber: 'MBCHB/01/005D/FEB/2024',
     course: 'Medicine',
     yearOfStudy: 1,
     semesterOfStudy: '1',
@@ -545,7 +496,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '50',
     studentNumber: 'KU0053901234',
-    studentRegistrationNumber: 'BACC/02/005D/AUG/2022',
     course: 'Accounting',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -556,7 +506,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '51',
     studentNumber: 'KU0054012345',
-    studentRegistrationNumber: 'BCSIT/03/006D/FEB/2021',
     course: 'Computer Science & Information Technology',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -567,7 +516,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '52',
     studentNumber: 'KU0055123456',
-    studentRegistrationNumber: 'BEC/04/006D/AUG/2020',
     course: 'Economics',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -578,7 +526,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '53',
     studentNumber: 'KU0056234567',
-    studentRegistrationNumber: 'BSOGM/02/006D/FEB/2023',
     course: 'Science in Oil & Gas Management',
     yearOfStudy: 2,
     semesterOfStudy: '1',
@@ -589,7 +536,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '54',
     studentNumber: 'KU0057345678',
-    studentRegistrationNumber: 'BPA/01/006D/AUG/2024',
     course: 'Public Administration',
     yearOfStudy: 1,
     semesterOfStudy: '2',
@@ -600,7 +546,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '55',
     studentNumber: 'KU0058456789',
-    studentRegistrationNumber: 'BBA/03/006D/FEB/2021',
     course: 'Business Administration',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -611,7 +556,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '56',
     studentNumber: 'KU0059567890',
-    studentRegistrationNumber: 'BAED/04/006D/AUG/2020',
     course: 'Arts with Education',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -622,7 +566,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '57',
     studentNumber: 'KU0060678901',
-    studentRegistrationNumber: 'LLB/01/006D/FEB/2024',
     course: 'Law',
     yearOfStudy: 1,
     semesterOfStudy: '1',
@@ -633,7 +576,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '58',
     studentNumber: 'KU0061789012',
-    studentRegistrationNumber: 'BENG/02/006D/AUG/2022',
     course: 'Engineering',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -644,7 +586,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '59',
     studentNumber: 'KU0062890123',
-    studentRegistrationNumber: 'MBCHB/03/006D/FEB/2021',
     course: 'Medicine',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -655,7 +596,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '60',
     studentNumber: 'KU0063901234',
-    studentRegistrationNumber: 'BACC/04/006D/AUG/2020',
     course: 'Accounting',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -666,7 +606,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '61',
     studentNumber: 'KU0064012345',
-    studentRegistrationNumber: 'BCSIT/01/007D/FEB/2025',
     course: 'Computer Science & Information Technology',
     yearOfStudy: 1,
     semesterOfStudy: '1',
@@ -677,7 +616,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '62',
     studentNumber: 'KU0065123456',
-    studentRegistrationNumber: 'BEC/03/007D/AUG/2021',
     course: 'Economics',
     yearOfStudy: 3,
     semesterOfStudy: '2',
@@ -688,7 +626,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '63',
     studentNumber: 'KU0066234567',
-    studentRegistrationNumber: 'BSOGM/04/007D/FEB/2020',
     course: 'Science in Oil & Gas Management',
     yearOfStudy: 4,
     semesterOfStudy: '1',
@@ -699,7 +636,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '64',
     studentNumber: 'KU0067345678',
-    studentRegistrationNumber: 'BPA/02/007D/AUG/2023',
     course: 'Public Administration',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -710,7 +646,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '65',
     studentNumber: 'KU0068456789',
-    studentRegistrationNumber: 'BBA/01/007D/FEB/2024',
     course: 'Business Administration',
     yearOfStudy: 1,
     semesterOfStudy: '1',
@@ -721,7 +656,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '66',
     studentNumber: 'KU0069567890',
-    studentRegistrationNumber: 'BAED/02/007D/AUG/2023',
     course: 'Arts with Education',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -732,7 +666,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '67',
     studentNumber: 'KU0070678901',
-    studentRegistrationNumber: 'LLB/03/007D/FEB/2021',
     course: 'Law',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -743,7 +676,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '68',
     studentNumber: 'KU0071789012',
-    studentRegistrationNumber: 'BENG/04/007D/AUG/2020',
     course: 'Engineering',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -754,7 +686,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '69',
     studentNumber: 'KU0072890123',
-    studentRegistrationNumber: 'MBCHB/01/007D/FEB/2024',
     course: 'Medicine',
     yearOfStudy: 1,
     semesterOfStudy: '1',
@@ -765,7 +696,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '70',
     studentNumber: 'KU0073901234',
-    studentRegistrationNumber: 'BACC/03/007D/AUG/2021',
     course: 'Accounting',
     yearOfStudy: 3,
     semesterOfStudy: '2',
@@ -776,7 +706,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '71',
     studentNumber: 'KU0074012345',
-    studentRegistrationNumber: 'BCSIT/02/008D/FEB/2023',
     course: 'Computer Science & Information Technology',
     yearOfStudy: 2,
     semesterOfStudy: '1',
@@ -787,7 +716,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '72',
     studentNumber: 'KU0075123456',
-    studentRegistrationNumber: 'BEC/01/008D/AUG/2024',
     course: 'Economics',
     yearOfStudy: 1,
     semesterOfStudy: '2',
@@ -798,7 +726,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '73',
     studentNumber: 'KU0076234567',
-    studentRegistrationNumber: 'BSOGM/03/008D/FEB/2022',
     course: 'Science in Oil & Gas Management',
     yearOfStudy: 3,
     semesterOfStudy: '2',
@@ -809,7 +736,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '74',
     studentNumber: 'KU0077345678',
-    studentRegistrationNumber: 'BPA/04/008D/AUG/2020',
     course: 'Public Administration',
     yearOfStudy: 4,
     semesterOfStudy: '1',
@@ -820,7 +746,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '75',
     studentNumber: 'KU0078456789',
-    studentRegistrationNumber: 'BBA/02/008D/FEB/2022',
     course: 'Business Administration',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -831,7 +756,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '76',
     studentNumber: 'KU0079567890',
-    studentRegistrationNumber: 'BAED/03/008D/AUG/2021',
     course: 'Arts with Education',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -842,7 +766,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '77',
     studentNumber: 'KU0080678901',
-    studentRegistrationNumber: 'LLB/04/008D/FEB/2020',
     course: 'Law',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -853,7 +776,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '78',
     studentNumber: 'KU0081789012',
-    studentRegistrationNumber: 'BENG/01/008D/AUG/2024',
     course: 'Engineering',
     yearOfStudy: 1,
     semesterOfStudy: '1',
@@ -864,7 +786,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '79',
     studentNumber: 'KU0082890123',
-    studentRegistrationNumber: 'MBCHB/02/008D/FEB/2023',
     course: 'Medicine',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -875,7 +796,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '80',
     studentNumber: 'KU0083901234',
-    studentRegistrationNumber: 'BACC/04/008D/AUG/2020',
     course: 'Accounting',
     yearOfStudy: 4,
     semesterOfStudy: '1',
@@ -886,7 +806,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '81',
     studentNumber: 'KU0084012345',
-    studentRegistrationNumber: 'BCSIT/03/009D/FEB/2021',
     course: 'Computer Science & Information Technology',
     yearOfStudy: 3,
     semesterOfStudy: '2',
@@ -897,7 +816,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '82',
     studentNumber: 'KU0085123456',
-    studentRegistrationNumber: 'BEC/02/009D/AUG/2022',
     course: 'Economics',
     yearOfStudy: 2,
     semesterOfStudy: '1',
@@ -908,7 +826,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '83',
     studentNumber: 'KU0086234567',
-    studentRegistrationNumber: 'BSOGM/01/009D/FEB/2025',
     course: 'Science in Oil & Gas Management',
     yearOfStudy: 1,
     semesterOfStudy: '2',
@@ -919,7 +836,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '84',
     studentNumber: 'KU0087345678',
-    studentRegistrationNumber: 'BPA/03/009D/AUG/2022',
     course: 'Public Administration',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -930,7 +846,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '85',
     studentNumber: 'KU0088456789',
-    studentRegistrationNumber: 'BBA/04/009D/FEB/2020',
     course: 'Business Administration',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -941,7 +856,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '86',
     studentNumber: 'KU0089567890',
-    studentRegistrationNumber: 'BAED/01/009D/AUG/2025',
     course: 'Arts with Education',
     yearOfStudy: 1,
     semesterOfStudy: '1',
@@ -952,7 +866,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '87',
     studentNumber: 'KU0090678901',
-    studentRegistrationNumber: 'LLB/02/009D/FEB/2023',
     course: 'Law',
     yearOfStudy: 2,
     semesterOfStudy: '2',
@@ -963,7 +876,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '88',
     studentNumber: 'KU0091789012',
-    studentRegistrationNumber: 'BENG/03/009D/AUG/2021',
     course: 'Engineering',
     yearOfStudy: 3,
     semesterOfStudy: '1',
@@ -974,7 +886,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '89',
     studentNumber: 'KU0092890123',
-    studentRegistrationNumber: 'MBCHB/04/009D/FEB/2020',
     course: 'Medicine',
     yearOfStudy: 4,
     semesterOfStudy: '2',
@@ -985,7 +896,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '90',
     studentNumber: 'KU0093901234',
-    studentRegistrationNumber: 'BACC/01/009D/AUG/2025',
     course: 'Accounting',
     yearOfStudy: 1,
     semesterOfStudy: '2',
@@ -996,7 +906,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '91',
     studentNumber: 'KU0094012345',
-    studentRegistrationNumber: 'BCSIT/04/010D/FEB/2020',
     course: 'Computer Science & Information Technology',
     yearOfStudy: 4,
     semesterOfStudy: '1',
@@ -1007,7 +916,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '92',
     studentNumber: 'KU0095123456',
-    studentRegistrationNumber: 'BEC/03/010D/AUG/2021',
     course: 'Economics',
     yearOfStudy: 3,
     semesterOfStudy: '2',
@@ -1018,7 +926,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '93',
     studentNumber: 'KU0096234567',
-    studentRegistrationNumber: 'BSOGM/02/010D/FEB/2023',
     course: 'Science in Oil & Gas Management',
     yearOfStudy: 2,
     semesterOfStudy: '1',
@@ -1029,7 +936,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '94',
     studentNumber: 'KU0097345678',
-    studentRegistrationNumber: 'BPA/01/010D/AUG/2024',
     course: 'Public Administration',
     yearOfStudy: 1,
     semesterOfStudy: '2',
@@ -1040,7 +946,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '95',
     studentNumber: 'KU0098456789',
-    studentRegistrationNumber: 'BBA/02/010D/FEB/2022',
     course: 'Business Administration',
     yearOfStudy: 2,
     semesterOfStudy: '1',
@@ -1051,7 +956,6 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '96',
     studentNumber: 'KU0099567890',
-    studentRegistrationNumber: 'BAED/04/010D/AUG/2020',
     course: 'Arts with Education',
     yearOfStudy: 4,
     semesterOfStudy: '2',

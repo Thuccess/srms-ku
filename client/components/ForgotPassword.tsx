@@ -49,8 +49,11 @@ const ForgotPassword: React.FC = () => {
       
       // In development, show the reset token if provided
       if (response.data.resetToken) {
-        console.log('Reset token (dev only):', response.data.resetToken);
-        console.log('Reset link:', response.data.resetLink);
+        // Only log in development
+        if (import.meta.env.DEV) {
+          console.log('Reset token (dev only):', response.data.resetToken);
+          console.log('Reset link:', response.data.resetLink);
+        }
       }
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'Failed to send reset email. Please try again.';

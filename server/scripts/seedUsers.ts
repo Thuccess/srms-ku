@@ -70,6 +70,12 @@ const testUsers = [
     fullName: 'IT Administrator',
     role: UserRole.IT_ADMIN,
   },
+  {
+    email: 'receptionist@ku.ac.ug',
+    password: 'receptionist123456',
+    fullName: 'Receptionist',
+    role: UserRole.RECEPTIONIST,
+  },
 ];
 
 const seedUsers = async () => {

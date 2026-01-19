@@ -16,6 +16,7 @@ export enum UserRole {
   LECTURER = 'LECTURER',
   REGISTRY = 'REGISTRY',
   IT_ADMIN = 'IT_ADMIN',
+  RECEPTIONIST = 'RECEPTIONIST',
 }
 
 export enum InterventionType {
@@ -45,7 +46,6 @@ export interface Student {
   id: string;
   // Allowed fields only
   studentNumber: string;
-  studentRegistrationNumber: string;
   course: string;
   yearOfStudy: number;
   semesterOfStudy: '1' | '2';

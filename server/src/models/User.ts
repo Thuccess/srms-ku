@@ -14,6 +14,7 @@ import bcrypt from 'bcryptjs';
  * - LECTURER: Course-scoped access ONLY, risk indicators for enrolled students
  * - REGISTRY: Academic data integrity dashboards, NO AI risk scores unless enabled
  * - IT_ADMIN: System-level access ONLY, NO academic or student data
+ * - RECEPTIONIST: Attendance digitization ONLY, NO access to dashboards, analytics, or other features
  */
 export enum UserRole {
   VC = 'VC',
@@ -24,6 +25,7 @@ export enum UserRole {
   LECTURER = 'LECTURER',
   REGISTRY = 'REGISTRY',
   IT_ADMIN = 'IT_ADMIN',
+  RECEPTIONIST = 'RECEPTIONIST',
 }
 
 export interface IUser extends Document {

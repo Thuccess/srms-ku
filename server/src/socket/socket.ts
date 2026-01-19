@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import Student from '../models/Student.js';
+import logger from '../utils/logger.js';
 
 // Store the io instance to emit events from controllers
 let ioInstance: Server | null = null;
@@ -63,8 +64,8 @@ export const emitDashboardStats = async (): Promise<void> => {
     };
 
     emitToAll('stats:updated', { stats });
-  } catch (error) {
-    console.error('Error calculating dashboard stats:', error);
+  } catch (error: any) {
+    logger.error('Error calculating dashboard stats:', { error: error.message, stack: error.stack });
   }
 };
 

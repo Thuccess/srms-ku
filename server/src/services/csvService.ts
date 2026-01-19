@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import Student from '../models/Student.js';
 import { UserRole } from '../models/User.js';
+import logger from '../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,13 +35,12 @@ const escapeCsvField = (field: string | number | undefined | null): string => {
 
 /**
  * Generate CSV content from students array
- * Only includes allowed fields: Student Number, Student Registration Number, Course, Year of Study, Semester of Study, GPA, Attendance, Balance
+ * Only includes allowed fields: Student Number, Course, Year of Study, Semester of Study, GPA, Attendance, Balance
  */
 const generateCsvContent = (students: any[]): string => {
   // Define headers - Only allowed fields in exact order
   const headers = [
     'Student Number',
-    'Student Registration Number',
     'Course', // Keep 'Course' header for backward compatibility
     'Year of Study',
     'Semester of Study',
@@ -53,7 +53,6 @@ const generateCsvContent = (students: any[]): string => {
   const rows = students.map((student) => {
     return [
       escapeCsvField(student.studentNumber || ''),
-      escapeCsvField(student.studentRegistrationNumber || ''),
       escapeCsvField(student.program || student.course || ''), // Use 'program' field, fallback to 'course'
       escapeCsvField(student.yearOfStudy || ''),
       escapeCsvField(student.semesterOfStudy || ''),
@@ -91,9 +90,9 @@ export const regenerateCsvFile = async (): Promise<void> => {
     // Write to file
     fs.writeFileSync(CSV_FILE_PATH, csvContent, 'utf8');
 
-    console.log(`✅ CSV file updated: ${CSV_FILE_PATH} (${students.length} students)`);
-  } catch (error) {
-    console.error('❌ Failed to regenerate CSV file:', error);
+    logger.info(`CSV file updated: ${CSV_FILE_PATH} (${students.length} students)`);
+  } catch (error: any) {
+    logger.error('Failed to regenerate CSV file:', { error: error.message, stack: error.stack });
     throw error;
   }
 };
@@ -119,9 +118,9 @@ export const csvFileExists = (): boolean => {
 export const initializeCsvFile = async (): Promise<void> => {
   try {
     await regenerateCsvFile();
-    console.log('✅ CSV file initialized');
-  } catch (error) {
-    console.error('❌ Failed to initialize CSV file:', error);
+    logger.info('CSV file initialized');
+  } catch (error: any) {
+    logger.error('Failed to initialize CSV file:', { error: error.message, stack: error.stack });
   }
 };
 
