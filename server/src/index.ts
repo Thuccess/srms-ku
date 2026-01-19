@@ -71,8 +71,8 @@ const startServer = async () => {
     // Setup Socket.io event handlers
     setupSocketIO(io);
     
-    // Start server
-    httpServer.listen(PORT, () => {
+    // Start server - bind to 0.0.0.0 for container compatibility
+    httpServer.listen(PORT, '0.0.0.0', () => {
       logger.info('Server started successfully', { port: PORT, environment: process.env.NODE_ENV });
       console.log(`✅ Server running on port ${PORT}`);
       console.log(`✅ Socket.io server initialized`);
